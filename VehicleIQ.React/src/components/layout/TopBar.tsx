@@ -3,6 +3,7 @@ import { Bell } from 'lucide-react';
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/':           { title: 'Dashboard',      subtitle: 'Your fleet overview at a glance'     },
+  '/analytics':  { title: 'Analytics & AI', subtitle: 'Fleet health insights & predictive intelligence' },
   '/vehicles':   { title: 'My Vehicles',    subtitle: 'Manage your registered vehicles'     },
   '/fuel':       { title: 'Fuel Log',       subtitle: 'Track fuel consumption & mileage'    },
   '/service':    { title: 'Service History',subtitle: 'Maintenance & repair records'        },

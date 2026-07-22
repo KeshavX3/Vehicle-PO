@@ -1,12 +1,13 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Car, Fuel, Wrench, Receipt,
+  LayoutDashboard, Sparkles, Car, Fuel, Wrench, Receipt,
   Shield, FileCheck, Bell, FileText, ChevronRight, LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard'     },
+  { to: '/analytics',   icon: Sparkles,        label: 'Analytics & AI' },
   { to: '/vehicles',    icon: Car,             label: 'Vehicles'      },
   { to: '/fuel',        icon: Fuel,            label: 'Fuel Log'      },
   { to: '/service',     icon: Wrench,          label: 'Service'       },

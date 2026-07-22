@@ -43,6 +43,7 @@ builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 // ─── Services ───
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IFuelEntryService, FuelEntryService>();
 builder.Services.AddScoped<IServiceRecordService, ServiceRecordService>();
