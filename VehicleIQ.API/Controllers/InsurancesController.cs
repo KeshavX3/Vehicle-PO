@@ -13,6 +13,13 @@ public class InsurancesController : BaseApiController
         _insuranceService = insuranceService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<InsuranceDto>>> GetAllInsurances()
+    {
+        var insurances = await _insuranceService.GetInsurancesByUserIdAsync(CurrentUserId);
+        return Ok(insurances);
+    }
+
     [HttpGet("vehicle/{vehicleId}")]
     public async Task<ActionResult<IReadOnlyList<InsuranceDto>>> GetInsurances(int vehicleId)
     {

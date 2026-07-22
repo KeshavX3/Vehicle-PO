@@ -19,6 +19,15 @@ public class InsuranceRepository : GenericRepository<Insurance>, IInsuranceRepos
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<Insurance>> GetByUserIdAsync(int userId)
+    {
+        return await _context.Insurances
+            .Include(i => i.Vehicle)
+            .Where(i => i.Vehicle.UserId == userId)
+            .OrderByDescending(i => i.EndDate)
+            .ToListAsync();
+    }
+
     public async Task<Insurance?> GetActiveInsuranceAsync(int vehicleId)
     {
         var now = DateTime.UtcNow;

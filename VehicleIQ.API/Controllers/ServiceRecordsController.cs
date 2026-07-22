@@ -13,6 +13,13 @@ public class ServiceRecordsController : BaseApiController
         _serviceRecordService = serviceRecordService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<ServiceRecordDto>>> GetAllServiceRecords()
+    {
+        var records = await _serviceRecordService.GetServiceRecordsByUserIdAsync(CurrentUserId);
+        return Ok(records);
+    }
+
     [HttpGet("vehicle/{vehicleId}")]
     public async Task<ActionResult<IReadOnlyList<ServiceRecordDto>>> GetServiceRecords(int vehicleId)
     {

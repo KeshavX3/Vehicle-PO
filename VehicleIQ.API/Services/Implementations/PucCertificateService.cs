@@ -23,6 +23,12 @@ public class PucCertificateService : IPucCertificateService
         _reminderRepository = reminderRepository;
     }
 
+    public async Task<IReadOnlyList<PucCertificateDto>> GetPucsByUserIdAsync(int userId)
+    {
+        var pucs = await _pucCertificateRepository.GetByUserIdAsync(userId);
+        return pucs.Select(p => p.ToDto()).ToList().AsReadOnly();
+    }
+
     public async Task<IReadOnlyList<PucCertificateDto>> GetPucsByVehicleIdAsync(int vehicleId, int userId)
     {
         // Guard: Verify vehicle exists and belongs to user

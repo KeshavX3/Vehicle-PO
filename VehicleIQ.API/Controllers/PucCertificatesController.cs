@@ -13,6 +13,13 @@ public class PucCertificatesController : BaseApiController
         _pucCertificateService = pucCertificateService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<PucCertificateDto>>> GetAllPucs()
+    {
+        var pucs = await _pucCertificateService.GetPucsByUserIdAsync(CurrentUserId);
+        return Ok(pucs);
+    }
+
     [HttpGet("vehicle/{vehicleId}")]
     public async Task<ActionResult<IReadOnlyList<PucCertificateDto>>> GetPucs(int vehicleId)
     {

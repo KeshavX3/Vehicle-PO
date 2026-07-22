@@ -19,6 +19,15 @@ public class PucCertificateRepository : GenericRepository<PucCertificate>, IPucC
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<PucCertificate>> GetByUserIdAsync(int userId)
+    {
+        return await _context.PucCertificates
+            .Include(p => p.Vehicle)
+            .Where(p => p.Vehicle.UserId == userId)
+            .OrderByDescending(p => p.ExpiryDate)
+            .ToListAsync();
+    }
+
     public async Task<PucCertificate?> GetActivePucAsync(int vehicleId)
     {
         var now = DateTime.UtcNow;

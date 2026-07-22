@@ -9,19 +9,13 @@ import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import Vehicles from './pages/Vehicles';
 import VehicleDetail from './pages/VehicleDetail';
+import FuelLogPage from './pages/FuelLogPage';
+import ServiceHistoryPage from './pages/ServiceHistoryPage';
+import InsurancePage from './pages/InsurancePage';
+import PucPage from './pages/PucPage';
 import Expenses from './pages/Expenses';
 import Reminders from './pages/Reminders';
 import Documents from './pages/Documents';
-
-const ComingSoon = ({ name }: { name: string }) => (
-  <div className="flex items-center justify-center h-64">
-    <div className="text-center">
-      <p className="text-4xl mb-3">🚧</p>
-      <h3 className="text-lg font-semibold text-white">{name}</h3>
-      <p className="text-slate-400 text-sm mt-1">Access this from a Vehicle's detail page.</p>
-    </div>
-  </div>
-);
 
 export default function App() {
   return (
@@ -47,10 +41,10 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/vehicles" element={<Vehicles />} />
               <Route path="/vehicles/:id" element={<VehicleDetail />} />
-              <Route path="/fuel" element={<ComingSoon name="Fuel Log" />} />
-              <Route path="/service" element={<ComingSoon name="Service History" />} />
-              <Route path="/insurance" element={<ComingSoon name="Insurance" />} />
-              <Route path="/puc" element={<ComingSoon name="PUC Certificates" />} />
+              <Route path="/fuel" element={<FuelLogPage />} />
+              <Route path="/service" element={<ServiceHistoryPage />} />
+              <Route path="/insurance" element={<InsurancePage />} />
+              <Route path="/puc" element={<PucPage />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/reminders" element={<Reminders />} />
               <Route path="/documents" element={<Documents />} />

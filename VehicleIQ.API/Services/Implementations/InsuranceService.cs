@@ -29,6 +29,12 @@ public class InsuranceService : IInsuranceService
         _reminderRepository = reminderRepository;
     }
 
+    public async Task<IReadOnlyList<InsuranceDto>> GetInsurancesByUserIdAsync(int userId)
+    {
+        var insurances = await _insuranceRepository.GetByUserIdAsync(userId);
+        return insurances.Select(i => i.ToDto()).ToList().AsReadOnly();
+    }
+
     public async Task<IReadOnlyList<InsuranceDto>> GetInsurancesByVehicleIdAsync(int vehicleId, int userId)
     {
         // Guard: Verify vehicle exists and belongs to user

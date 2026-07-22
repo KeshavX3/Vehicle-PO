@@ -26,6 +26,12 @@ public class FuelEntryService : IFuelEntryService
         _expenseRepository = expenseRepository;
     }
 
+    public async Task<IReadOnlyList<FuelEntryDto>> GetFuelEntriesByUserIdAsync(int userId)
+    {
+        var entries = await _fuelEntryRepository.GetByUserIdAsync(userId);
+        return entries.Select(e => e.ToDto()).ToList().AsReadOnly();
+    }
+
     public async Task<IReadOnlyList<FuelEntryDto>> GetFuelEntriesByVehicleIdAsync(int vehicleId, int userId)
     {
         // Guard: Verify vehicle exists and belongs to user

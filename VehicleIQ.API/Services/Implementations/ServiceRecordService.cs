@@ -29,6 +29,12 @@ public class ServiceRecordService : IServiceRecordService
         _reminderRepository = reminderRepository;
     }
 
+    public async Task<IReadOnlyList<ServiceRecordDto>> GetServiceRecordsByUserIdAsync(int userId)
+    {
+        var records = await _serviceRecordRepository.GetByUserIdAsync(userId);
+        return records.Select(r => r.ToDto()).ToList().AsReadOnly();
+    }
+
     public async Task<IReadOnlyList<ServiceRecordDto>> GetServiceRecordsByVehicleIdAsync(int vehicleId, int userId)
     {
         // Guard: Verify vehicle exists and belongs to user

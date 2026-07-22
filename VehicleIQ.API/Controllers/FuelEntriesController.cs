@@ -13,6 +13,13 @@ public class FuelEntriesController : BaseApiController
         _fuelEntryService = fuelEntryService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<FuelEntryDto>>> GetAllFuelEntries()
+    {
+        var entries = await _fuelEntryService.GetFuelEntriesByUserIdAsync(CurrentUserId);
+        return Ok(entries);
+    }
+
     [HttpGet("vehicle/{vehicleId}")]
     public async Task<ActionResult<IReadOnlyList<FuelEntryDto>>> GetFuelEntries(int vehicleId)
     {

@@ -20,6 +20,16 @@ public class FuelEntryRepository : GenericRepository<FuelEntry>, IFuelEntryRepos
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<FuelEntry>> GetByUserIdAsync(int userId)
+    {
+        return await _context.FuelEntries
+            .Include(f => f.Vehicle)
+            .Where(f => f.Vehicle.UserId == userId)
+            .OrderByDescending(f => f.Date)
+            .ThenByDescending(f => f.OdometerReading)
+            .ToListAsync();
+    }
+
     public async Task<FuelEntry?> GetPreviousFullFuelEntryAsync(int vehicleId, decimal currentOdometer)
     {
         return await _context.FuelEntries

@@ -18,4 +18,13 @@ public class ServiceRecordRepository : GenericRepository<ServiceRecord>, IServic
             .OrderByDescending(s => s.Date)
             .ToListAsync();
     }
+
+    public async Task<IReadOnlyList<ServiceRecord>> GetByUserIdAsync(int userId)
+    {
+        return await _context.ServiceRecords
+            .Include(s => s.Vehicle)
+            .Where(s => s.Vehicle.UserId == userId)
+            .OrderByDescending(s => s.Date)
+            .ToListAsync();
+    }
 }
