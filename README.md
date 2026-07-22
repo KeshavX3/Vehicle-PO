@@ -26,7 +26,7 @@
 
 ## 🌌 Overview
 
-**VehicleIQ** is an enterprise-grade, full-stack vehicle fleet management & analytics SaaS platform. Designed with a **futuristic dark glassmorphism UI**, it empowers users to monitor vehicle health, track fuel consumption, forecast maintenance costs, store documents securely, and receive **predictive AI alerts** for servicing and efficiency drops.
+**VehicleIQ** is an enterprise-grade, full-stack vehicle fleet management & analytics SaaS platform. Designed with a **futuristic dark glassmorphism UI**, it empowers users to monitor vehicle health across **20+ fleet vehicles**, track fuel consumption, forecast maintenance costs, store documents securely, and receive **predictive AI alerts** for servicing and efficiency drops.
 
 ---
 

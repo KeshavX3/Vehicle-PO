@@ -106,6 +106,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Automatically seed 20 fleet vehicles and complete test data on startup if needed
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DataSeeder.SeedComprehensiveFleetDataAsync(context);
+}
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
