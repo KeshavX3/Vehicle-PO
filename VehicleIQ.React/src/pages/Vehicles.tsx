@@ -72,50 +72,77 @@ export default function Vehicles() {
           action={<button onClick={() => setOpen(true)} className="btn-primary">Add Your First Vehicle</button>}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {vehicles.map((v, idx) => (
-            <div key={v.id} className="glass-card hover:border-white/15 hover:scale-[1.01] transition-all duration-300 group overflow-hidden">
-              {/* Color strip */}
-              <div className={`h-1.5 w-full bg-gradient-to-r ${vehicleGradients[idx % vehicleGradients.length]} rounded-t-2xl -mt-5 -mx-5 mb-5 w-[calc(100%+40px)]`} />
+            <div
+              key={v.id}
+              className="glass-card hover:border-accent/40 hover:bg-white/6 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group flex flex-col justify-between overflow-hidden relative"
+            >
+              {/* Gradient Accent Bar */}
+              <div className={`h-1.5 w-full bg-gradient-to-r ${vehicleGradients[idx % vehicleGradients.length]}`} />
 
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${vehicleGradients[idx % vehicleGradients.length]} border border-white/10 flex items-center justify-center`}>
-                  <Car className="w-7 h-7 text-white" />
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                {/* Header Row: Icon + Delete */}
+                <div className="flex items-start justify-between">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${vehicleGradients[idx % vehicleGradients.length]} border border-white/12 flex items-center justify-center shadow-lg`}>
+                    <Car className="w-6 h-6 text-white" />
+                  </div>
+                  <button
+                    onClick={() => onDelete(v.id)}
+                    className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2.5 !py-1.5"
+                    title="Delete vehicle"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button onClick={() => onDelete(v.id)} className="btn-danger opacity-0 group-hover:opacity-100 !px-2 !py-1.5">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
 
-              <h3 className="text-lg font-bold text-white mb-0.5">{v.make} {v.model}</h3>
-              <p className="text-sm text-slate-400 mb-3">{v.year} · {v.registrationNumber}</p>
-
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <Badge label={vehicleTypeLabel[v.vehicleType]} variant="blue" />
-                <Badge label={fuelTypeLabel[v.fuelType]} variant={fuelTypeColors[v.fuelType]} />
-                {v.color && <Badge label={v.color} variant="slate" />}
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-white/8">
-                <div className="flex items-center gap-1.5 text-slate-400">
-                  <Gauge className="w-4 h-4" />
-                  <span className="text-sm font-medium text-white">{formatKm(v.currentOdometer)}</span>
+                {/* Title & Registration */}
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-accent transition-colors">
+                    {v.make} {v.model}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-white/6 text-slate-300 font-mono border border-white/8">
+                      {v.registrationNumber}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">• {v.year}</span>
+                  </div>
                 </div>
-                <Link to={`/vehicles/${v.id}`}
-                  className="flex items-center gap-1 text-xs text-accent hover:text-accent-light font-medium transition-colors">
-                  View Details <ChevronRight className="w-3 h-3" />
-                </Link>
+
+                {/* Badges */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge label={vehicleTypeLabel[v.vehicleType]} variant="blue" />
+                  <Badge label={fuelTypeLabel[v.fuelType]} variant={fuelTypeColors[v.fuelType]} />
+                  {v.color && <Badge label={v.color} variant="slate" />}
+                </div>
+
+                {/* Footer Row: Odometer & View Details */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/8">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <Gauge className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                    <span className="text-xs font-semibold">{formatKm(v.currentOdometer)}</span>
+                  </div>
+                  <Link
+                    to={`/vehicles/${v.id}`}
+                    className="btn-ghost !py-1.5 !px-3 !text-xs !font-semibold !text-accent hover:!bg-accent/15 hover:!text-white border-accent/20 transition-all flex items-center gap-1"
+                  >
+                    View Details
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
 
-          {/* Add card */}
-          <button onClick={() => setOpen(true)}
-            className="glass-card border-dashed hover:bg-white/4 flex flex-col items-center justify-center gap-3 py-12 text-slate-500 hover:text-white transition-all duration-300 group min-h-[220px]">
-            <div className="w-12 h-12 rounded-2xl border border-dashed border-white/20 group-hover:border-white/40 flex items-center justify-center transition-all">
+          {/* Add Vehicle Card */}
+          <button
+            onClick={() => setOpen(true)}
+            className="glass-card border-dashed border-white/20 hover:border-accent/40 hover:bg-white/4 flex flex-col items-center justify-center gap-3 p-8 text-slate-500 hover:text-white transition-all duration-300 group min-h-[240px]"
+          >
+            <div className="w-12 h-12 rounded-2xl border border-dashed border-white/20 group-hover:border-accent/50 group-hover:bg-accent/10 flex items-center justify-center transition-all text-slate-400 group-hover:text-accent">
               <Plus className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium">Add another vehicle</span>
+            <span className="text-sm font-semibold tracking-wide">Add New Vehicle</span>
           </button>
         </div>
       )}
