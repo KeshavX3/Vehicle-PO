@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Car, Lock, Mail, User as UserIcon, Phone, ArrowRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { authApi, RegisterPayload } from '../api/auth.api';
+import { authApi, type RegisterPayload } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 
 interface RegisterFormFields extends RegisterPayload {

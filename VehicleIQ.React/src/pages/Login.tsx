@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Car, Lock, Mail, ArrowRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { authApi, LoginPayload } from '../api/auth.api';
+import { authApi, type LoginPayload } from '../api/auth.api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
