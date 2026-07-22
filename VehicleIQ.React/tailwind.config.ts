@@ -19,6 +19,15 @@ export default {
           dark: '#2563eb',
         },
       },
+      opacity: {
+        '2':  '0.02',
+        '4':  '0.04',
+        '6':  '0.06',
+        '8':  '0.08',
+        '12': '0.12',
+        '15': '0.15',
+        '18': '0.18',
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
