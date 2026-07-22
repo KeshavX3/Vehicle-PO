@@ -1,8 +1,9 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Car, Fuel, Wrench, Receipt,
-  Shield, FileCheck, Bell, FileText, ChevronRight,
+  Shield, FileCheck, Bell, FileText, ChevronRight, LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard'     },
@@ -18,6 +19,15 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const initial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U';
 
   return (
     <aside className="w-64 flex-shrink-0 flex flex-col h-full glass-card rounded-none border-r border-white/8 border-t-0 border-b-0 border-l-0">
@@ -56,17 +66,24 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-4 border-t border-white/8">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-            K
+      {/* Footer / User Profile */}
+      <div className="px-4 py-4 border-t border-white/8 space-y-2">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/4">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            {initial}
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">Keshav</p>
-            <p className="text-xs text-slate-500 truncate">Demo Account</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white truncate">{user?.fullName || 'User'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.email || 'Logged in'}</p>
           </div>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-all duration-200"
+        >
+          <LogOut className="w-3.5 h-3.5" /> Sign Out
+        </button>
       </div>
     </aside>
   );

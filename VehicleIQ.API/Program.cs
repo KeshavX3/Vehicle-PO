@@ -1,11 +1,14 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
 using VehicleIQ.API.Data;
 using VehicleIQ.API.Middleware;
-using VehicleIQ.API.Repositories.Interfaces;
 using VehicleIQ.API.Repositories.Implementations;
-using VehicleIQ.API.Services.Interfaces;
+using VehicleIQ.API.Repositories.Interfaces;
 using VehicleIQ.API.Services.Implementations;
+using VehicleIQ.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +22,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions =>
         {
-            // Retry on transient failures (network blips, SQL Server restarts)
             sqlOptions.EnableRetryOnFailure(
                 maxRetryCount: 3,
                 maxRetryDelay: TimeSpan.FromSeconds(5),
@@ -39,6 +41,8 @@ builder.Services.AddScoped<IReminderRepository, ReminderRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 // ─── Services ───
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IFuelEntryService, FuelEntryService>();
 builder.Services.AddScoped<IServiceRecordService, ServiceRecordService>();
@@ -48,19 +52,47 @@ builder.Services.AddScoped<IPucCertificateService, PucCertificateService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
-// Controllers — we use controllers, not minimal APIs, for a clean architecture
-builder.Services.AddControllers();
+// ─── JWT Authentication Configuration ───
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "VehicleIQ_SuperSecret_Key_Min32Chars_2024!!";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "VehicleIQ.API";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehicleIQ.React";
 
-// Swagger — API documentation and testing
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Swagger Generator
 builder.Services.AddSwaggerGen();
 
-// CORS — allow React frontend to call the API
+// CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Vite default port
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -73,14 +105,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Global Exception Handler - must be first in pipeline
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// ──────────────────────────────────────────────
-// 3. Configure Middleware Pipeline
-// ──────────────────────────────────────────────
-
-// Swagger UI — available in development only
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -92,11 +118,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// CORS must come before authentication and authorization
 app.UseCors("AllowReactApp");
 
-// Serve uploaded documents statically (e.g. photos/receipts)
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 if (!Directory.Exists(uploadsPath))
 {
@@ -109,9 +132,8 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 
-// Authentication & Authorization (will be configured in Phase 5)
-// app.UseAuthentication();
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
