@@ -28,6 +28,7 @@ public class RemindersController : BaseApiController
     }
 
     [HttpPut("{id}/status")]
+    [HttpPatch("{id}/status")]
     public async Task<ActionResult<ReminderDto>> UpdateReminderStatus(int id, [FromBody] UpdateReminderStatusRequest request)
     {
         var updated = await _reminderService.UpdateReminderStatusAsync(id, request, CurrentUserId);
