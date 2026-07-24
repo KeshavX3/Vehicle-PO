@@ -13,12 +13,16 @@ import type { FuelEntryDto, VehicleDto, CreateFuelEntryRequest } from '../types'
 import { FuelType } from '../types';
 import { formatCurrency, formatDate, formatKm, fuelTypeLabel } from '../utils/formatters';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function FuelLogPage() {
   const [entries, setEntries] = useState<FuelEntryDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | 'all'>('all');
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateFuelEntryRequest>();
 
@@ -49,11 +53,19 @@ export default function FuelLogPage() {
     loadData();
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this fuel entry?')) return;
-    await fuelEntriesApi.delete(id);
-    toast.success('Deleted');
-    loadData();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await fuelEntriesApi.delete(deleteId);
+      toast.success('Fuel entry deleted permanently from database');
+      setDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete fuel entry');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = selectedVehicleId === 'all'
@@ -176,8 +188,9 @@ export default function FuelLogPage() {
                     </td>
                     <td>
                       <button
-                        onClick={() => onDelete(e.id)}
+                        onClick={() => setDeleteId(e.id)}
                         className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
+                        title="Delete fuel entry"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -259,6 +272,16 @@ export default function FuelLogPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Fuel Entry"
+        description="Are you sure you want to permanently delete this fuel entry and its auto-generated expense record from the database?"
+      />
     </div>
   );
 }

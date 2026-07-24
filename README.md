@@ -37,12 +37,14 @@
 | 🔑 **JWT Authentication** | Secure registration, BCrypt password hashing, 7-day signed JWT tokens, and automatic session persistence. |
 | 📊 **Interactive Dashboard** | Live KPI counters, 6-month spending trends, expense category pie chart, and upcoming due reminders. |
 | 🚘 **Vehicle Garage** | Card grid with gradient headers, full vehicle specifications, current odometer, and tabbed detail views. |
-| ⛽ **Fuel Log & Mileage** | Instant fuel logging with auto-calculated rolling mileage ($km/L$) and station tracking. |
-| 🔧 **Service History** | Garage tracking, maintenance logs, itemized costs, and next service interval targets. |
+| ⛽ **Fuel Log Page** | Dedicated standalone sidebar page with instant fuel logging, rolling mileage ($km/L$) statistics, and vehicle filters. |
+| 🔧 **Service History Page** | Dedicated standalone page tracking workshops, maintenance logs, itemized costs, and next service interval targets. |
 | 💸 **Expense Tracker** | Categorized spending, monthly expenditure bar charts, and category filter pills. |
-| 🧠 **AI Fleet Analytics** | Fuel efficiency anomaly detection ($>15\%$ drop alerts), predictive service due calendar, and cost-per-km ($CPK$) benchmarks. |
-| 🛡️ **Insurance & PUC** | Active policy status badges, expiration warnings, and renewal tracking. |
+| 🛡️ **Insurance & PUC Pages** | Standalone sidebar pages with active policy status badges, expiration warnings, and renewal tracking. |
+| 🔔 **Reminders Hub** | Status action buttons (Done, Snooze +3/7/14 days, Dismiss, Restore), overdue tracking, and filter tabs. |
 | 📁 **Document Library** | Multi-file document storage for RC books, insurance policies, and test certificates. |
+| 🗑️ **Permanent Cascade Delete** | Glassmorphism confirmation modals & permanent cascade removal across all entities in SQL Server. |
+| 🧠 **AI Fleet Analytics** | Fuel efficiency anomaly detection ($>15\%$ drop alerts), predictive service due calendar, and cost-per-km ($CPK$) benchmarks. |
 
 ---
 

@@ -11,11 +11,15 @@ import { vehiclesApi } from '../api/vehicles.api';
 import type { PucCertificateDto, VehicleDto, CreatePucCertificateRequest } from '../types';
 import { formatDate, daysUntil } from '../utils/formatters';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function PucPage() {
   const [pucs, setPucs] = useState<PucCertificateDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreatePucCertificateRequest>();
 
@@ -41,11 +45,19 @@ export default function PucPage() {
     loadData();
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this PUC certificate?')) return;
-    await pucCertificatesApi.delete(id);
-    toast.success('Deleted');
-    loadData();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await pucCertificatesApi.delete(deleteId);
+      toast.success('PUC certificate deleted permanently from database');
+      setDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete PUC certificate');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -99,8 +111,9 @@ export default function PucPage() {
                         dot
                       />
                       <button
-                        onClick={() => onDelete(puc.id)}
+                        onClick={() => setDeleteId(puc.id)}
                         className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
+                        title="Delete PUC certificate"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -177,6 +190,16 @@ export default function PucPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete PUC Certificate"
+        description="Are you sure you want to permanently delete this PUC certificate and its auto-generated reminder from the database?"
+      />
     </div>
   );
 }

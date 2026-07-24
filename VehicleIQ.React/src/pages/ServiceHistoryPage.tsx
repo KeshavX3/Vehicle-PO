@@ -13,12 +13,16 @@ import type { ServiceRecordDto, VehicleDto, CreateServiceRecordRequest } from '.
 import { ServiceType } from '../types';
 import { formatCurrency, formatDate, formatKm, serviceTypeLabel } from '../utils/formatters';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function ServiceHistoryPage() {
   const [records, setRecords] = useState<ServiceRecordDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | 'all'>('all');
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateServiceRecordRequest>();
 
@@ -48,11 +52,19 @@ export default function ServiceHistoryPage() {
     loadData();
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this service record?')) return;
-    await serviceRecordsApi.delete(id);
-    toast.success('Deleted');
-    loadData();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await serviceRecordsApi.delete(deleteId);
+      toast.success('Service record deleted permanently from database');
+      setDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete service record');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = selectedVehicleId === 'all'
@@ -168,8 +180,9 @@ export default function ServiceHistoryPage() {
                     </td>
                     <td>
                       <button
-                        onClick={() => onDelete(r.id)}
+                        onClick={() => setDeleteId(r.id)}
                         className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
+                        title="Delete service record"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -252,6 +265,16 @@ export default function ServiceHistoryPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Service Record"
+        description="Are you sure you want to permanently delete this service record and its auto-generated expense & reminder from the database?"
+      />
     </div>
   );
 }

@@ -12,11 +12,15 @@ import type { InsuranceDto, VehicleDto, CreateInsuranceRequest } from '../types'
 import { InsuranceCoverageType } from '../types';
 import { formatCurrency, formatDate, daysUntil, insuranceCoverageLabel } from '../utils/formatters';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function InsurancePage() {
   const [insurances, setInsurances] = useState<InsuranceDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateInsuranceRequest>();
 
@@ -44,11 +48,19 @@ export default function InsurancePage() {
     loadData();
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this insurance record?')) return;
-    await insuranceApi.delete(id);
-    toast.success('Deleted');
-    loadData();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await insuranceApi.delete(deleteId);
+      toast.success('Insurance policy deleted permanently from database');
+      setDeleteId(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete insurance policy');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -102,8 +114,9 @@ export default function InsurancePage() {
                         dot
                       />
                       <button
-                        onClick={() => onDelete(ins.id)}
+                        onClick={() => setDeleteId(ins.id)}
                         className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
+                        title="Delete policy"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -215,6 +228,16 @@ export default function InsurancePage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Insurance Policy"
+        description="Are you sure you want to permanently delete this insurance policy and its auto-generated expense & reminder from the database?"
+      />
     </div>
   );
 }

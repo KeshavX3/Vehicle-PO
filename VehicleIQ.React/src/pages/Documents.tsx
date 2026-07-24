@@ -26,12 +26,16 @@ const fileIconColor: Record<string, string> = {
   default: 'text-slate-400',
 };
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function Documents() {
   const [docs, setDocs] = useState<DocumentDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [uploading, setUploading] = useState(false);
   const [docType, setDocType] = useState<DocumentType>(DocumentType.Other);
   const [vehicleId, setVehicleId] = useState<number | ''>('');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => Promise.all([documentsApi.getAll(), vehiclesApi.getAll()]).then(([d, v]) => { setDocs(d); setVehicles(v); });
@@ -55,9 +59,19 @@ export default function Documents() {
     }
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this document?')) return;
-    await documentsApi.delete(id); toast.success('Deleted'); load();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await documentsApi.delete(deleteId);
+      toast.success('Document deleted permanently from server and database');
+      setDeleteId(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete document');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -121,7 +135,7 @@ export default function Documents() {
                       className="btn-ghost !px-2 !py-1.5 opacity-0 group-hover:opacity-100">
                       <Eye className="w-3.5 h-3.5" />
                     </a>
-                    <button onClick={() => onDelete(doc.id)} className="btn-danger !px-2 !py-1.5 opacity-0 group-hover:opacity-100">
+                    <button onClick={() => setDeleteId(doc.id)} className="btn-danger !px-2 !py-1.5 opacity-0 group-hover:opacity-100" title="Delete document">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -131,6 +145,16 @@ export default function Documents() {
           })}
         </div>
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Document"
+        description="Are you sure you want to permanently delete this document and remove its physical file from the server?"
+      />
     </div>
   );
 }

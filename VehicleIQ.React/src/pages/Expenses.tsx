@@ -17,11 +17,16 @@ const categoryVariants: Record<number, 'blue'|'green'|'amber'|'red'|'purple'|'sl
   0:'blue', 1:'purple', 2:'green', 3:'amber', 4:'slate', 5:'slate', 6:'red', 7:'blue', 8:'green', 99:'slate',
 };
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function Expenses() {
   const [expenses, setExpenses] = useState<ExpenseDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [filter, setFilter] = useState<number | 'all'>('all');
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateExpenseRequest>();
 
   const load = () => Promise.all([expensesApi.getAll(), vehiclesApi.getAll()]).then(([e, v]) => { setExpenses(e); setVehicles(v); });
@@ -32,8 +37,19 @@ export default function Expenses() {
     toast.success('Expense added!'); reset(); setOpen(false); load();
   };
 
-  const onDelete = async (id: number) => {
-    await expensesApi.delete(id); toast.success('Deleted'); load();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await expensesApi.delete(deleteId);
+      toast.success('Expense deleted permanently from database');
+      setDeleteId(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete expense');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = filter === 'all' ? expenses : expenses.filter(e => e.category === filter);
@@ -105,7 +121,7 @@ export default function Expenses() {
                   <td className="text-slate-400 text-xs">{vehicles.find(v => v.id === e.vehicleId)?.registrationNumber || '—'}</td>
                   <td className="text-right font-semibold text-white">{formatCurrency(e.amount)}</td>
                   <td>
-                    <button onClick={() => onDelete(e.id)} className="btn-danger opacity-0 group-hover:opacity-100 !px-2 !py-1">
+                    <button onClick={() => setDeleteId(e.id)} className="btn-danger opacity-0 group-hover:opacity-100 !px-2 !py-1" title="Delete expense">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </td>
@@ -142,6 +158,16 @@ export default function Expenses() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Expense"
+        description="Are you sure you want to permanently delete this expense from the database?"
+      />
     </div>
   );
 }

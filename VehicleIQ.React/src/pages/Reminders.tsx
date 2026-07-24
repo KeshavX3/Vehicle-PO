@@ -29,6 +29,8 @@ import { formatDate, daysUntil, reminderTypeLabel } from '../utils/formatters';
 
 type TabType = 'all' | 'pending' | 'snoozed' | 'completed';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 export default function Reminders() {
   const [reminders, setReminders] = useState<ReminderDto[]>([]);
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
@@ -37,6 +39,8 @@ export default function Reminders() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | 'all'>('all');
   const [snoozeMenuOpen, setSnoozeMenuOpen] = useState<number | null>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const {
     register,
@@ -127,14 +131,18 @@ export default function Reminders() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to permanently delete this reminder?')) return;
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      await remindersApi.delete(id);
-      toast.success('Reminder deleted');
+      setDeleting(true);
+      await remindersApi.delete(deleteId);
+      toast.success('Reminder deleted permanently from database');
+      setDeleteId(null);
       loadData();
     } catch (err: any) {
-      toast.error('Failed to delete reminder');
+      toast.error(err.response?.data?.message || 'Failed to delete reminder');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -384,7 +392,7 @@ export default function Reminders() {
                     </div>
 
                     <button
-                      onClick={() => handleDelete(r.id)}
+                      onClick={() => setDeleteId(r.id)}
                       className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
                       title="Delete reminder"
                     >
@@ -608,6 +616,16 @@ export default function Reminders() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Reminder"
+        description="Are you sure you want to permanently delete this reminder from the database?"
+      />
     </div>
   );
 }

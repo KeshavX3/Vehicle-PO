@@ -12,6 +12,8 @@ import { VehicleType, FuelType } from '../types';
 import { vehiclesApi } from '../api/vehicles.api';
 import { formatKm, vehicleTypeLabel, fuelTypeLabel } from '../utils/formatters';
 
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 const fuelTypeColors: Record<FuelType, 'blue' | 'amber' | 'green' | 'purple' | 'slate'> = {
   [FuelType.Petrol]: 'blue',
   [FuelType.Diesel]: 'amber',
@@ -24,6 +26,9 @@ export default function Vehicles() {
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreateVehicleRequest>();
 
   const load = () => vehiclesApi.getAll().then(setVehicles).finally(() => setLoading(false));
@@ -37,11 +42,19 @@ export default function Vehicles() {
     load();
   };
 
-  const onDelete = async (id: number) => {
-    if (!confirm('Delete this vehicle and all its data?')) return;
-    await vehiclesApi.delete(id);
-    toast.success('Vehicle deleted');
-    load();
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      await vehiclesApi.delete(deleteId);
+      toast.success('Vehicle deleted permanently from database');
+      setDeleteId(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete vehicle');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const vehicleGradients = [
@@ -88,7 +101,7 @@ export default function Vehicles() {
                     <Car className="w-6 h-6 text-white" />
                   </div>
                   <button
-                    onClick={() => onDelete(v.id)}
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(v.id); }}
                     className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2.5 !py-1.5"
                     title="Delete vehicle"
                   >
@@ -200,6 +213,16 @@ export default function Vehicles() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        loading={deleting}
+        title="Delete Vehicle"
+        description="Are you sure you want to permanently delete this vehicle and all its fuel, service, insurance, and telemetry history from the database?"
+      />
     </div>
   );
 }
