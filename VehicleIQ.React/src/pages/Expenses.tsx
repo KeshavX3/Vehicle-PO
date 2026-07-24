@@ -84,8 +84,19 @@ export default function Expenses() {
             <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false}
               tickFormatter={(v) => `₹${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
-            <Tooltip contentStyle={{ background: '#0d1530', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }}
-              formatter={(v: unknown) => [formatCurrency(v as number), 'Spent']} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: 12,
+                color: '#ffffff',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.6)',
+                padding: '10px 14px',
+              }}
+              cursor={{ fill: 'rgba(59, 130, 246, 0.08)', stroke: 'rgba(59, 130, 246, 0.2)', strokeWidth: 1, rx: 6 }}
+              formatter={(v: unknown) => [formatCurrency(v as number), 'Spent']}
+            />
             <Bar dataKey="amount" fill="#3b82f6" radius={[6,6,0,0]} />
           </BarChart>
         </ResponsiveContainer>
