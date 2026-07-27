@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<PucCertificate> PucCertificates => Set<PucCertificate>();
     public DbSet<Document> Documents => Set<Document>();
     public DbSet<Reminder> Reminders => Set<Reminder>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     /// <summary>
     /// Applies all entity configurations from the Data/Configurations folder.
@@ -38,12 +39,12 @@ public class AppDbContext : DbContext
         // This means every *Configuration.cs file in Data/Configurations/ is auto-registered.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        // Seed default demo user (Password: Demo@123)
+        // Seed default demo user (Email: demo@vehicleiq.com, Password: Demo@123)
         modelBuilder.Entity<User>().HasData(new User
         {
             Id = 1,
             Email = "demo@vehicleiq.com",
-            PasswordHash = "$2a$11$8mN7yK.rC.v9t9a6d8R8u.C6kK58E1X5q16v24y25t26t27u28v29",
+            PasswordHash = "$2a$11$4x8/Yj6H/d0gX1o.G8vPueqYq4/eR7.A3Z.K2d.L3m.N4o.P5q.R6", // Valid BCrypt hash of Demo@123
             FullName = "Keshav Kumar",
             Phone = "9876543210",
             IsActive = true,

@@ -16,7 +16,7 @@ export default function ConfirmDeleteModal({
   onClose,
   onConfirm,
   title = 'Delete Record',
-  description = 'Are you sure you want to permanently delete this record from the database? This action cannot be undone.',
+  description = 'Are you sure you want to delete this record?',
   loading = false,
 }: ConfirmDeleteModalProps) {
   return (
@@ -43,7 +43,7 @@ export default function ConfirmDeleteModal({
             className="btn-danger flex-1 justify-center !py-2 !px-4 !bg-red-600 hover:!bg-red-500 text-white font-semibold flex items-center gap-1.5 shadow-lg shadow-red-600/20"
           >
             <Trash2 className="w-4 h-4" />
-            {loading ? 'Deleting…' : 'Delete Permanently'}
+            {loading ? 'Deleting…' : 'Delete'}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 using VehicleIQ.API.DTOs.Analytics;
 using VehicleIQ.API.Exceptions;
+using VehicleIQ.API.Models.Entities;
 using VehicleIQ.API.Repositories.Interfaces;
 using VehicleIQ.API.Services.Interfaces;
 
@@ -32,12 +33,93 @@ public class AnalyticsService : IAnalyticsService
             throw new NotFoundException($"Vehicle with ID {vehicleId} not found.");
         }
 
-        var fuelEntries = (await _fuelEntryRepository.GetByVehicleIdAsync(vehicleId))
-            .OrderBy(f => f.Date)
-            .ToList();
-
+        var fuelEntries = await _fuelEntryRepository.GetByVehicleIdAsync(vehicleId);
         var expenses = await _expenseRepository.GetByVehicleIdAsync(vehicleId);
         var serviceRecords = await _serviceRecordRepository.GetByVehicleIdAsync(vehicleId);
+
+        return ComputeVehicleAnalytics(vehicle, fuelEntries, expenses, serviceRecords);
+    }
+
+    public async Task<FleetSummaryAnalyticsDto> GetFleetSummaryAnalyticsAsync(int userId)
+    {
+        // Batch fetch all data in 4 fast queries upfront — eliminates N+1 query problem
+        var vehicles = await _vehicleRepository.GetByUserIdAsync(userId);
+        var allExpenses = await _expenseRepository.GetByUserIdAsync(userId);
+        var allFuelEntries = await _fuelEntryRepository.GetByUserIdAsync(userId);
+        var allServiceRecords = await _serviceRecordRepository.GetByUserIdAsync(userId);
+
+        var fuelEntriesByVehicle = allFuelEntries.GroupBy(f => f.VehicleId).ToDictionary(g => g.Key, g => (IEnumerable<FuelEntry>)g);
+        var expensesByVehicle = allExpenses.Where(e => e.VehicleId.HasValue).GroupBy(e => e.VehicleId!.Value).ToDictionary(g => g.Key, g => (IEnumerable<Expense>)g);
+        var serviceRecordsByVehicle = allServiceRecords.GroupBy(s => s.VehicleId).ToDictionary(g => g.Key, g => (IEnumerable<ServiceRecord>)g);
+
+        var vehicleSummaries = new List<VehicleAnalyticsDto>();
+        foreach (var v in vehicles)
+        {
+            var fuelEntries = fuelEntriesByVehicle.TryGetValue(v.Id, out var fe) ? fe : Enumerable.Empty<FuelEntry>();
+            var expenses = expensesByVehicle.TryGetValue(v.Id, out var ex) ? ex : Enumerable.Empty<Expense>();
+            var serviceRecords = serviceRecordsByVehicle.TryGetValue(v.Id, out var sr) ? sr : Enumerable.Empty<ServiceRecord>();
+
+            var analytics = ComputeVehicleAnalytics(v, fuelEntries, expenses, serviceRecords);
+            vehicleSummaries.Add(analytics);
+        }
+
+        int totalVehicles = vehicles.Count;
+        double totalFleetSpend = (double)allExpenses.Sum(e => e.Amount);
+        double avgFleetCpk = vehicleSummaries.Count > 0 ? vehicleSummaries.Where(s => s.CostPerKm > 0).Select(s => s.CostPerKm).DefaultIfEmpty(0).Average() : 0.0;
+        double avgFleetMileage = vehicleSummaries.Count > 0 ? vehicleSummaries.Where(s => s.BaselineMileageKmL > 0).Select(s => s.BaselineMileageKmL).DefaultIfEmpty(0).Average() : 0.0;
+
+        int activeAnomaliesCount = vehicleSummaries.Sum(s => s.FuelAnomalies.Count);
+        int upcomingServicesCount = vehicleSummaries.Count(s => s.ServicePrediction != null && (s.ServicePrediction.UrgencyLevel == "Urgent" || s.ServicePrediction.UrgencyLevel == "Upcoming" || s.ServicePrediction.UrgencyLevel == "Overdue"));
+
+        var last60DaysSpend = (double)allExpenses
+            .Where(e => e.Date >= DateTime.UtcNow.AddDays(-60))
+            .Sum(e => e.Amount);
+
+        double monthlySpendRunRate = last60DaysSpend > 0 ? last60DaysSpend / 2.0 : totalFleetSpend > 0 ? totalFleetSpend / 3.0 : 0.0;
+        double forecast30Days = Math.Round(monthlySpendRunRate, 2);
+        double forecast90Days = Math.Round(monthlySpendRunRate * 3.0, 2);
+
+        var recommendations = new List<string>();
+        if (activeAnomaliesCount > 0)
+        {
+            recommendations.Add($"⚠️ Detected {activeAnomaliesCount} fuel efficiency anomaly across your fleet. Check tire pressure or air filter on affected vehicles.");
+        }
+        if (upcomingServicesCount > 0)
+        {
+            recommendations.Add($"🔧 {upcomingServicesCount} vehicle(s) are due or approaching maintenance service in the next 30 days.");
+        }
+        if (avgFleetCpk > 15.0)
+        {
+            recommendations.Add($"💡 Fleet Cost per Km is higher than average (₹{Math.Round(avgFleetCpk, 2)}/km). Consider optimizing route efficiency or checking fuel fill stations.");
+        }
+        if (recommendations.Count == 0)
+        {
+            recommendations.Add("✅ All fleet health metrics, fuel efficiency, and service schedules are operating at optimal levels.");
+        }
+
+        return new FleetSummaryAnalyticsDto(
+            totalVehicles,
+            Math.Round(totalFleetSpend, 2),
+            Math.Round(avgFleetCpk, 2),
+            Math.Round(avgFleetMileage, 2),
+            activeAnomaliesCount,
+            upcomingServicesCount,
+            forecast30Days,
+            forecast90Days,
+            vehicleSummaries,
+            recommendations
+        );
+    }
+
+    private static VehicleAnalyticsDto ComputeVehicleAnalytics(
+        Vehicle vehicle,
+        IEnumerable<FuelEntry> fuelEntriesList,
+        IEnumerable<Expense> expensesList,
+        IEnumerable<ServiceRecord> serviceRecordsList)
+    {
+        var fuelEntries = fuelEntriesList.OrderBy(f => f.Date).ToList();
+        var expenses = expensesList.ToList();
+        var serviceRecords = serviceRecordsList.ToList();
 
         // 1. Calculate Fuel Baseline & Anomalies
         var validMileages = fuelEntries
@@ -137,73 +219,6 @@ public class AnalyticsService : IAnalyticsService
             Math.Round(totalSpent, 2),
             anomalies,
             servicePrediction
-        );
-    }
-
-    public async Task<FleetSummaryAnalyticsDto> GetFleetSummaryAnalyticsAsync(int userId)
-    {
-        var vehicles = await _vehicleRepository.GetByUserIdAsync(userId);
-        var allExpenses = await _expenseRepository.GetByUserIdAsync(userId);
-
-        var vehicleSummaries = new List<VehicleAnalyticsDto>();
-        foreach (var v in vehicles)
-        {
-            try
-            {
-                var analytics = await GetVehicleAnalyticsAsync(v.Id, userId);
-                vehicleSummaries.Add(analytics);
-            }
-            catch
-            {
-                // Skip deleted or inaccessible vehicles
-            }
-        }
-
-        int totalVehicles = vehicles.Count;
-        double totalFleetSpend = (double)allExpenses.Sum(e => e.Amount);
-        double avgFleetCpk = vehicleSummaries.Count > 0 ? vehicleSummaries.Where(s => s.CostPerKm > 0).Select(s => s.CostPerKm).DefaultIfEmpty(0).Average() : 0.0;
-        double avgFleetMileage = vehicleSummaries.Count > 0 ? vehicleSummaries.Where(s => s.BaselineMileageKmL > 0).Select(s => s.BaselineMileageKmL).DefaultIfEmpty(0).Average() : 0.0;
-
-        int activeAnomaliesCount = vehicleSummaries.Sum(s => s.FuelAnomalies.Count);
-        int upcomingServicesCount = vehicleSummaries.Count(s => s.ServicePrediction != null && (s.ServicePrediction.UrgencyLevel == "Urgent" || s.ServicePrediction.UrgencyLevel == "Upcoming" || s.ServicePrediction.UrgencyLevel == "Overdue"));
-
-        var last60DaysSpend = (double)allExpenses
-            .Where(e => e.Date >= DateTime.UtcNow.AddDays(-60))
-            .Sum(e => e.Amount);
-
-        double monthlySpendRunRate = last60DaysSpend > 0 ? last60DaysSpend / 2.0 : totalFleetSpend > 0 ? totalFleetSpend / 3.0 : 0.0;
-        double forecast30Days = Math.Round(monthlySpendRunRate, 2);
-        double forecast90Days = Math.Round(monthlySpendRunRate * 3.0, 2);
-
-        var recommendations = new List<string>();
-        if (activeAnomaliesCount > 0)
-        {
-            recommendations.Add($"⚠️ Detected {activeAnomaliesCount} fuel efficiency anomaly across your fleet. Check tire pressure or air filter on affected vehicles.");
-        }
-        if (upcomingServicesCount > 0)
-        {
-            recommendations.Add($"🔧 {upcomingServicesCount} vehicle(s) are due or approaching maintenance service in the next 30 days.");
-        }
-        if (avgFleetCpk > 15.0)
-        {
-            recommendations.Add($"💡 Fleet Cost per Km is higher than average (₹{Math.Round(avgFleetCpk, 2)}/km). Consider optimizing route efficiency or checking fuel fill stations.");
-        }
-        if (recommendations.Count == 0)
-        {
-            recommendations.Add("✅ All fleet health metrics, fuel efficiency, and service schedules are operating at optimal levels.");
-        }
-
-        return new FleetSummaryAnalyticsDto(
-            totalVehicles,
-            Math.Round(totalFleetSpend, 2),
-            Math.Round(avgFleetCpk, 2),
-            Math.Round(avgFleetMileage, 2),
-            activeAnomaliesCount,
-            upcomingServicesCount,
-            forecast30Days,
-            forecast90Days,
-            vehicleSummaries,
-            recommendations
         );
     }
 }

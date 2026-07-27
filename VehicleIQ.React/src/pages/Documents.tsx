@@ -67,7 +67,7 @@ export default function Documents() {
     try {
       setDeleting(true);
       await documentsApi.delete(deleteId);
-      toast.success('Document deleted permanently');
+      toast.success('Document deleted successfully');
       setDeleteId(null);
       load();
     } catch (err: any) {
@@ -314,7 +314,7 @@ export default function Documents() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Document"
-        description="Are you sure you want to permanently delete this document and remove its file from the server?"
+        description="Are you sure you want to delete this document?"
       />
     </div>
   );

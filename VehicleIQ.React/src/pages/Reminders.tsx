@@ -136,7 +136,7 @@ export default function Reminders() {
     try {
       setDeleting(true);
       await remindersApi.delete(deleteId);
-      toast.success('Reminder deleted permanently from database');
+      toast.success('Reminder deleted successfully');
       setDeleteId(null);
       loadData();
     } catch (err: any) {
@@ -624,7 +624,7 @@ export default function Reminders() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Reminder"
-        description="Are you sure you want to permanently delete this reminder from the database?"
+        description="Are you sure you want to delete this reminder?"
       />
     </div>
   );

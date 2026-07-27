@@ -14,9 +14,14 @@ public class ExpensesController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ExpenseDto>>> GetExpenses()
+    public async Task<IActionResult> GetExpenses([FromQuery] PaginationParams? pagination)
     {
         var expenses = await _expenseService.GetExpensesByUserIdAsync(CurrentUserId);
+        if (pagination != null && (pagination.PageNumber > 1 || Request.Query.ContainsKey("pageSize")))
+        {
+            var paged = expenses.Skip((pagination.PageNumber - 1) * pagination.PageSize).Take(pagination.PageSize).ToList();
+            return Ok(PagedResult<ExpenseDto>.Create(paged, expenses.Count, pagination.PageNumber, pagination.PageSize));
+        }
         return Ok(expenses);
     }
 

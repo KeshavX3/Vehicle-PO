@@ -13,14 +13,14 @@ public static class DataSeeder
             return;
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == "engineer@vehicleiq.com");
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == "demo@vehicleiq.com");
         if (user == null)
         {
             user = new User
             {
-                Email = "engineer@vehicleiq.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-                FullName = "Demo Engineer",
+                Email = "demo@vehicleiq.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Demo@123"),
+                FullName = "Keshav Kumar",
                 Phone = "9876543210",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow

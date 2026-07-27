@@ -53,7 +53,7 @@ export default function InsurancePage() {
     try {
       setDeleting(true);
       await insuranceApi.delete(deleteId);
-      toast.success('Insurance policy deleted permanently from database');
+      toast.success('Insurance policy deleted successfully');
       setDeleteId(null);
       loadData();
     } catch (err: any) {
@@ -236,7 +236,7 @@ export default function InsurancePage() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Insurance Policy"
-        description="Are you sure you want to permanently delete this insurance policy and its auto-generated expense & reminder from the database?"
+        description="Are you sure you want to delete this insurance policy?"
       />
     </div>
   );

@@ -4,7 +4,7 @@
 ### *Smart Vehicle Health, Expense & Predictive Intelligence Platform*
 
 [![Build Status](https://img.shields.io/badge/Build-Passing-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
@@ -34,7 +34,7 @@
 
 | Module | Feature Capabilities |
 | :--- | :--- |
-| 🔑 **JWT Authentication** | Secure registration, BCrypt password hashing, 7-day signed JWT tokens, and automatic session persistence. |
+| 🔑 **JWT Authentication** | Secure registration, BCrypt password hashing, signed JWT tokens with refresh token flow, and automatic session persistence. |
 | 📊 **Interactive Dashboard** | Live KPI counters, 6-month spending trends, expense category pie chart, and upcoming due reminders. |
 | 🚘 **Vehicle Garage** | Card grid with gradient headers, full vehicle specifications, current odometer, and tabbed detail views. |
 | ⛽ **Fuel Log Page** | Dedicated standalone sidebar page with instant fuel logging, rolling mileage ($km/L$) statistics, and vehicle filters. |
@@ -43,7 +43,7 @@
 | 🛡️ **Insurance & PUC Pages** | Standalone sidebar pages with active policy status badges, expiration warnings, and renewal tracking. |
 | 🔔 **Reminders Hub** | Status action buttons (Done, Snooze +3/7/14 days, Dismiss, Restore), overdue tracking, and filter tabs. |
 | 📁 **Document Library** | Multi-file document storage for RC books, insurance policies, and test certificates. |
-| 🗑️ **Permanent Cascade Delete** | Glassmorphism confirmation modals & permanent cascade removal across all entities in SQL Server. |
+| 🗑️ **Soft Delete Safeguards** | Glassmorphism confirmation modals with soft-delete data protection in SQL Server. |
 | 🧠 **AI Fleet Analytics** | Fuel efficiency anomaly detection ($>15\%$ drop alerts), predictive service due calendar, and cost-per-km ($CPK$) benchmarks. |
 
 ---
@@ -52,9 +52,9 @@
 
 ```mermaid
 graph TD
-    User([User Browser]) <-->|HTTP/HTTPS| ReactApp[React 18 + TypeScript + Vite]
+    User([User Browser]) <-->|HTTP/HTTPS| ReactApp[React 19 + TypeScript + Vite]
     
-    subgraph Frontend Layer [React 18 Frontend - Port 5173]
+    subgraph Frontend Layer [React 19 Frontend - Port 5173]
         ReactApp -->|Context| AuthState[AuthContext & JWT Store]
         ReactApp -->|Axios Interceptor| AxiosClient[Central Axios Client]
         ReactApp -->|UI Styling| GlassUI[Tailwind CSS Glassmorphism]

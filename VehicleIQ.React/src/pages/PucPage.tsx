@@ -50,7 +50,7 @@ export default function PucPage() {
     try {
       setDeleting(true);
       await pucCertificatesApi.delete(deleteId);
-      toast.success('PUC certificate deleted permanently from database');
+      toast.success('PUC certificate deleted successfully');
       setDeleteId(null);
       loadData();
     } catch (err: any) {
@@ -198,7 +198,7 @@ export default function PucPage() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete PUC Certificate"
-        description="Are you sure you want to permanently delete this PUC certificate and its auto-generated reminder from the database?"
+        description="Are you sure you want to delete this PUC certificate?"
       />
     </div>
   );

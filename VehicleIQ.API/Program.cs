@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using FluentValidation;
 using VehicleIQ.API.Data;
 using VehicleIQ.API.Middleware;
 using VehicleIQ.API.Repositories.Implementations;
@@ -53,8 +54,19 @@ builder.Services.AddScoped<IPucCertificateService, PucCertificateService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
+// ─── FluentValidation ───
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
 // ─── JWT Authentication Configuration ───
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "VehicleIQ_SuperSecret_Key_Min32Chars_2024!!";
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    if (builder.Environment.IsProduction())
+    {
+        throw new InvalidOperationException("JWT signing key is not configured. Set 'Jwt:Key' in appsettings or environment variable 'Jwt__Key'.");
+    }
+    jwtKey = "VehicleIQ_Dev_Only_Key_Min32Chars_2024!!";
+}
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "VehicleIQ.API";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "VehicleIQ.React";
 
@@ -88,12 +100,15 @@ builder.Services.AddEndpointsApiExplorer();
 // Swagger Generator
 builder.Services.AddSwaggerGen();
 
-// CORS Policy
+// CORS Policy — configurable via appsettings
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:5173" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

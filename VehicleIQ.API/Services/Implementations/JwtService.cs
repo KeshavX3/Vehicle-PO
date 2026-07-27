@@ -18,7 +18,8 @@ public class JwtService : IJwtService
 
     public string GenerateToken(User user)
     {
-        var secretKey = _configuration["Jwt:Key"] ?? "VehicleIQ_SuperSecret_Key_Min32Chars_2024!!";
+        var secretKey = _configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("JWT signing key is not configured. Set 'Jwt:Key' in appsettings or environment variable 'Jwt__Key'.");
         var issuer = _configuration["Jwt:Issuer"] ?? "VehicleIQ.API";
         var audience = _configuration["Jwt:Audience"] ?? "VehicleIQ.React";
         var expiresInDays = int.TryParse(_configuration["Jwt:ExpiresInDays"], out var days) ? days : 7;

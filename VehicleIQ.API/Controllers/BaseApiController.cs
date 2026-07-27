@@ -11,7 +11,7 @@ public abstract class BaseApiController : ControllerBase
 {
     /// <summary>
     /// Reads the logged-in User ID from the validated JWT Claims.
-    /// Fallback to 1 for backwards compatibility if claim is unreadable.
+    /// Throws UnauthorizedAccessException if the claim is missing or unparseable.
     /// </summary>
     protected int CurrentUserId
     {
@@ -23,12 +23,7 @@ public abstract class BaseApiController : ControllerBase
                 return userId;
             }
 
-            if (Request.Headers.TryGetValue("X-User-Id", out var headerValue) && int.TryParse(headerValue, out var headerUserId))
-            {
-                return headerUserId;
-            }
-
-            return 1; // Fallback demo user
+            throw new UnauthorizedAccessException("User identity could not be determined from the JWT token.");
         }
     }
 }

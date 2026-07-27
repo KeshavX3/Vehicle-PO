@@ -61,7 +61,7 @@ export default function Vehicles() {
     try {
       setDeleting(true);
       await vehiclesApi.delete(deleteId);
-      toast.success('Vehicle deleted permanently from database');
+      toast.success('Vehicle deleted successfully');
       setDeleteId(null);
       load();
     } catch (err: any) {
@@ -251,7 +251,7 @@ export default function Vehicles() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Vehicle"
-        description="Are you sure you want to permanently delete this vehicle and all its fuel, service, insurance, and telemetry history from the database?"
+        description="Are you sure you want to delete this vehicle?"
       />
     </div>
   );

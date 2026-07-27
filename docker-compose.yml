@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vehicleiq-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Passw0rd2024!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql/data
+
+  api:
+    build:
+      context: ./VehicleIQ.API
+      dockerfile: Dockerfile
+    container_name: vehicleiq-api
+    ports:
+      - "5109:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=VehicleIQDB;User Id=sa;Password=YourStrong@Passw0rd2024!;TrustServerCertificate=True;MultipleActiveResultSets=true;
+      - Jwt__Key=VehicleIQ_SuperSecret_Production_Key_Min32Chars_2024!!
+      - Jwt__Issuer=VehicleIQ.API
+      - Jwt__Audience=VehicleIQ.React
+    depends_on:
+      - sqlserver
+
+volumes:
+  sqlserver_data:

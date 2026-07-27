@@ -57,7 +57,7 @@ export default function ServiceHistoryPage() {
     try {
       setDeleting(true);
       await serviceRecordsApi.delete(deleteId);
-      toast.success('Service record deleted permanently from database');
+      toast.success('Service record deleted successfully');
       setDeleteId(null);
       loadData();
     } catch (err: any) {
@@ -273,7 +273,7 @@ export default function ServiceHistoryPage() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Service Record"
-        description="Are you sure you want to permanently delete this service record and its auto-generated expense & reminder from the database?"
+        description="Are you sure you want to delete this service record?"
       />
     </div>
   );

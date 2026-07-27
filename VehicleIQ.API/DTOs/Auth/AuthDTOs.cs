@@ -14,8 +14,17 @@ public record LoginRequest(
     [Required] string Password
 );
 
+public record RefreshTokenRequest(
+    [Required] string RefreshToken
+);
+
+public record RevokeTokenRequest(
+    [Required] string RefreshToken
+);
+
 public record AuthResponseDto(
     string Token,
+    string RefreshToken,
     int UserId,
     string FullName,
     string Email,

@@ -14,9 +14,14 @@ public class VehiclesController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<VehicleDto>>> GetVehicles()
+    public async Task<IActionResult> GetVehicles([FromQuery] PaginationParams? pagination)
     {
         var vehicles = await _vehicleService.GetVehiclesByUserIdAsync(CurrentUserId);
+        if (pagination != null && (pagination.PageNumber > 1 || Request.Query.ContainsKey("pageSize")))
+        {
+            var paged = vehicles.Skip((pagination.PageNumber - 1) * pagination.PageSize).Take(pagination.PageSize).ToList();
+            return Ok(PagedResult<VehicleDto>.Create(paged, vehicles.Count, pagination.PageNumber, pagination.PageSize));
+        }
         return Ok(vehicles);
     }
 

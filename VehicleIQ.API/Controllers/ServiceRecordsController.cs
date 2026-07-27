@@ -14,9 +14,14 @@ public class ServiceRecordsController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ServiceRecordDto>>> GetAllServiceRecords()
+    public async Task<IActionResult> GetAllServiceRecords([FromQuery] PaginationParams? pagination)
     {
         var records = await _serviceRecordService.GetServiceRecordsByUserIdAsync(CurrentUserId);
+        if (pagination != null && (pagination.PageNumber > 1 || Request.Query.ContainsKey("pageSize")))
+        {
+            var paged = records.Skip((pagination.PageNumber - 1) * pagination.PageSize).Take(pagination.PageSize).ToList();
+            return Ok(PagedResult<ServiceRecordDto>.Create(paged, records.Count, pagination.PageNumber, pagination.PageSize));
+        }
         return Ok(records);
     }
 

@@ -42,7 +42,7 @@ export default function Expenses() {
     try {
       setDeleting(true);
       await expensesApi.delete(deleteId);
-      toast.success('Expense deleted permanently from database');
+      toast.success('Expense deleted successfully');
       setDeleteId(null);
       load();
     } catch (err: any) {
@@ -177,7 +177,7 @@ export default function Expenses() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Expense"
-        description="Are you sure you want to permanently delete this expense from the database?"
+        description="Are you sure you want to delete this expense?"
       />
     </div>
   );

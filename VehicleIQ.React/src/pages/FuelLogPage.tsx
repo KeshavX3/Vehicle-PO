@@ -58,7 +58,7 @@ export default function FuelLogPage() {
     try {
       setDeleting(true);
       await fuelEntriesApi.delete(deleteId);
-      toast.success('Fuel entry deleted permanently from database');
+      toast.success('Fuel entry deleted successfully');
       setDeleteId(null);
       loadData();
     } catch (err: any) {
@@ -280,7 +280,7 @@ export default function FuelLogPage() {
         onConfirm={confirmDelete}
         loading={deleting}
         title="Delete Fuel Entry"
-        description="Are you sure you want to permanently delete this fuel entry and its auto-generated expense record from the database?"
+        description="Are you sure you want to delete this fuel entry?"
       />
     </div>
   );

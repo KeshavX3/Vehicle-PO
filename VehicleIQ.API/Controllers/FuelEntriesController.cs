@@ -14,9 +14,14 @@ public class FuelEntriesController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<FuelEntryDto>>> GetAllFuelEntries()
+    public async Task<IActionResult> GetAllFuelEntries([FromQuery] PaginationParams? pagination)
     {
         var entries = await _fuelEntryService.GetFuelEntriesByUserIdAsync(CurrentUserId);
+        if (pagination != null && (pagination.PageNumber > 1 || Request.Query.ContainsKey("pageSize")))
+        {
+            var paged = entries.Skip((pagination.PageNumber - 1) * pagination.PageSize).Take(pagination.PageSize).ToList();
+            return Ok(PagedResult<FuelEntryDto>.Create(paged, entries.Count, pagination.PageNumber, pagination.PageSize));
+        }
         return Ok(entries);
     }
 
