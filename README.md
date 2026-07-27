@@ -99,7 +99,31 @@ Calculates true ownership cost per km ($Total Spent / Total Distance$) and proje
 - **.NET 8/10 SDK**
 - **SQL Server LocalDB** or SQL Server 2022
 
-### 1. Clone & Set Up Backend
+### ⚡ 1-Command Quick Start (Recommended)
+
+Run any of the following single commands from the project root directory:
+
+```cmd
+# Option 1: Via npm (cross-platform)
+npm start
+
+# Option 2: Via batch file
+.\start.bat
+
+# Option 3: Via PowerShell
+.\start.ps1
+```
+
+This single command will automatically:
+1. Start the ASP.NET Core API backend on `http://localhost:5109`
+2. Start the React Vite Cockpit UI on `http://localhost:5173`
+3. Launch `http://localhost:5173` in your default web browser
+
+---
+
+### Manual Setup (Step-by-Step)
+
+#### 1. Set Up Backend
 
 ```bash
 cd VehicleIQ.API
@@ -108,9 +132,8 @@ cd VehicleIQ.API
 dotnet ef database update
 
 # Run the API server
-dotnet run --launch-profile http
+dotnet run
 # API runs at http://localhost:5109
-# Swagger UI available at http://localhost:5109/swagger
 ```
 
 ### 2. Set Up Frontend

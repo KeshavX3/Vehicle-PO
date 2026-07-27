@@ -1,0 +1,10 @@
+{
+  "name": "vehicleiq-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VehicleIQ Fleet Management & Cockpit UI",
+  "scripts": {
+    "start": "start.bat",
+    "dev": "start.bat"
+  }
+}
