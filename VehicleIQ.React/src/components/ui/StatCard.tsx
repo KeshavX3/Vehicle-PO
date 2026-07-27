@@ -9,24 +9,26 @@ interface StatCardProps {
   trend?: { value: string; positive: boolean };
 }
 
-export default function StatCard({ title, value, subtitle, icon, ring = 'blue', trend }: StatCardProps) {
+export default function StatCard({ title, value, subtitle, icon, ring = 'amber', trend }: StatCardProps) {
+  const borderMap = {
+    amber: 'border-cockpit-amber/30 bg-cockpit-amber/5 text-cockpit-amber',
+    green: 'border-cockpit-green/30 bg-cockpit-green/5 text-cockpit-green',
+    blue: 'border-cockpit-blue/30 bg-cockpit-blue/5 text-cockpit-blue',
+    purple: 'border-purple-500/30 bg-purple-500/5 text-purple-400',
+  };
+
   return (
-    <div className={`glass-card p-5 stat-ring-${ring} animate-slide-up`}>
+    <div className="cockpit-card p-5 animate-fade-in border border-cockpit-border">
       <div className="flex items-start justify-between mb-3">
-        <p className="text-slate-400 text-sm font-medium">{title}</p>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center
-          ${ring === 'blue'   ? 'bg-blue-500/15 text-blue-400'   : ''}
-          ${ring === 'purple' ? 'bg-purple-500/15 text-purple-400' : ''}
-          ${ring === 'green'  ? 'bg-emerald-500/15 text-emerald-400' : ''}
-          ${ring === 'amber'  ? 'bg-amber-500/15 text-amber-400'  : ''}
-        `}>
+        <p className="text-cockpit-muted text-xs font-semibold uppercase tracking-wider">{title}</p>
+        <div className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${borderMap[ring]}`}>
           {icon}
         </div>
       </div>
-      <p className="text-2xl font-bold text-white mb-1">{value}</p>
-      {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+      <p className="text-2xl font-bold font-mono text-cockpit-text tracking-tight mb-1">{value}</p>
+      {subtitle && <p className="text-xs text-cockpit-muted font-medium">{subtitle}</p>}
       {trend && (
-        <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trend.positive ? 'text-emerald-400' : 'text-red-400'}`}>
+        <div className={`flex items-center gap-1 mt-2 text-xs font-mono font-semibold ${trend.positive ? 'text-emerald-400' : 'text-red-400'}`}>
           <span>{trend.positive ? '↑' : '↓'}</span>
           <span>{trend.value}</span>
         </div>

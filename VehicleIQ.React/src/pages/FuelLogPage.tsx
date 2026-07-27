@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Fuel, Plus, Trash2, Gauge, Filter } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Fuel, Plus, Trash2, Gauge } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import Card from '../components/ui/Card';
-import StatCard from '../components/ui/StatCard';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import MetricTile from '../components/cockpit/MetricTile';
+import GaugeRing from '../components/cockpit/GaugeRing';
+import CockpitButton from '../components/cockpit/CockpitButton';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 import { fuelEntriesApi } from '../api/fuelEntries.api';
 import { vehiclesApi } from '../api/vehicles.api';
 import type { FuelEntryDto, VehicleDto, CreateFuelEntryRequest } from '../types';
 import { FuelType } from '../types';
 import { formatCurrency, formatDate, formatKm, fuelTypeLabel } from '../utils/formatters';
-
-import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
 
 export default function FuelLogPage() {
   const [entries, setEntries] = useState<FuelEntryDto[]>([]);
@@ -83,116 +85,126 @@ export default function FuelLogPage() {
     <div className="space-y-6 animate-fade-in">
       {/* Top Action Bar & Filter */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="form-group min-w-[220px]">
-            <select
-              value={selectedVehicleId}
-              onChange={(e) => setSelectedVehicleId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-              className="bg-navy-800 border-white/10 text-white rounded-xl text-sm"
-            >
-              <option value="all"> All Vehicles ({vehicles.length})</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.make} {v.model} ({v.registrationNumber})
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="form-group min-w-[240px]">
+          <label>Filter Telemetry by Vehicle</label>
+          <select
+            value={selectedVehicleId}
+            onChange={(e) => setSelectedVehicleId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="bg-cockpit-surface-2 border-cockpit-border text-cockpit-text rounded-xl"
+          >
+            <option value="all">All Fleet Units ({vehicles.length})</option>
+            {vehicles.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.make} {v.model} ({v.registrationNumber})
+              </option>
+            ))}
+          </select>
         </div>
 
-        <button onClick={() => setOpen(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Log Fuel Refill
-        </button>
+        <CockpitButton
+          variant="primary"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={() => setOpen(true)}
+        >
+          Log Fuel Refill
+        </CockpitButton>
       </div>
 
-      {/* KPI Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          title="Total Fuel Refills"
-          value={filtered.length.toString()}
-          subtitle={`${totalLiters.toFixed(1)} Liters consumed`}
+      {/* KPI Stat Cards & Gauge */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <MetricTile
+          label="Total Fuel Refills"
+          value={filtered.length}
+          unit="entries"
           icon={<Fuel className="w-5 h-5" />}
-          ring="blue"
+          accentColor="blue"
         />
-        <StatCard
-          title="Total Fuel Spend"
+        <MetricTile
+          label="Total Volume Consumed"
+          value={totalLiters.toFixed(1)}
+          unit="L"
+          icon={<Fuel className="w-5 h-5" />}
+          accentColor="amber"
+        />
+        <MetricTile
+          label="Cumulative Refuel Cost"
           value={formatCurrency(totalCost)}
-          subtitle="Cumulative refuel expenditure"
           icon={<Fuel className="w-5 h-5" />}
-          ring="purple"
+          accentColor="green"
         />
-        <StatCard
-          title="Average Rolling Mileage"
-          value={avgMileage > 0 ? `${avgMileage.toFixed(1)} km/L` : 'N/A'}
-          subtitle="Full-tank-to-full-tank math"
-          icon={<Gauge className="w-5 h-5" />}
-          ring="green"
-        />
+
+        {/* Rolling Mileage SVG Gauge Card */}
+        <CockpitCard className="flex flex-col items-center justify-center p-4 text-center">
+          <GaugeRing
+            value={avgMileage}
+            max={30}
+            label="Rolling Mileage"
+            unit="km/L"
+            color="green"
+            size="sm"
+          />
+        </CockpitCard>
       </div>
 
       {/* Fuel Entries Table */}
       {filtered.length === 0 ? (
         <EmptyState
-          icon={<Fuel className="w-8 h-8 text-accent" />}
-          title="No fuel entries found"
-          description="Log your fuel fill-ups to calculate live rolling mileage and detect efficiency anomalies."
+          icon={<Fuel className="w-8 h-8 text-cockpit-amber" />}
+          title="No fuel entries logged"
+          description="Log fuel fill-ups to compute live rolling mileage and flag efficiency anomalies."
           action={
-            <button onClick={() => setOpen(true)} className="btn-primary">
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
               Log First Refill
-            </button>
+            </CockpitButton>
           }
         />
       ) : (
-        <Card className="!p-0 overflow-hidden">
+        <CockpitCard className="!p-0 overflow-hidden" title="Fuel Refuel Telemetry History" subtitle="Full-tank-to-full-tank calculation logs">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Vehicle</th>
+                <th>Vehicle Unit</th>
                 <th>Station</th>
                 <th>Odometer</th>
                 <th>Quantity</th>
                 <th>Price / L</th>
                 <th className="text-right">Total Cost</th>
-                <th>Mileage</th>
-                <th></th>
+                <th>Calculated Mileage</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => {
                 const vehicle = vehicles.find((v) => v.id === e.vehicleId);
                 return (
-                  <tr key={e.id} className="group hover:bg-white/4 transition-colors">
-                    <td>{formatDate(e.date)}</td>
+                  <tr key={e.id} className="group">
+                    <td className="font-mono text-xs">{formatDate(e.date)}</td>
                     <td>
                       <div>
-                        <p className="font-semibold text-white text-sm">
+                        <p className="font-bold text-cockpit-text text-xs">
                           {vehicle ? `${vehicle.make} ${vehicle.model}` : '—'}
                         </p>
-                        <span className="text-[11px] text-slate-500 font-mono">
+                        <span className="text-[10px] text-cockpit-muted font-mono">
                           {vehicle?.registrationNumber || '—'}
                         </span>
                       </div>
                     </td>
-                    <td className="text-slate-300 text-sm">{e.fuelStationName || '—'}</td>
-                    <td className="text-slate-300 font-medium">{formatKm(e.odometerReading)}</td>
-                    <td className="text-slate-300">{e.quantity.toFixed(1)} L</td>
-                    <td className="text-slate-400">₹{e.pricePerLiter.toFixed(2)}</td>
-                    <td className="text-right font-bold text-white">{formatCurrency(e.totalCost)}</td>
-                    <td>
-                      {e.calculatedMileage && e.calculatedMileage > 0 ? (
-                        <Badge label={`${e.calculatedMileage.toFixed(1)} km/L`} variant="green" />
-                      ) : (
-                        <span className="text-slate-500 text-xs">—</span>
-                      )}
+                    <td className="text-cockpit-muted text-xs">{e.fuelStationName || 'BPCL Outlet'}</td>
+                    <td className="font-mono font-semibold text-cockpit-text">{e.odometerReading.toLocaleString()} km</td>
+                    <td className="font-mono font-bold text-cockpit-text">{e.quantity.toFixed(1)} L</td>
+                    <td className="font-mono text-cockpit-muted">₹{e.pricePerLiter.toFixed(2)}</td>
+                    <td className="text-right font-mono font-bold text-cockpit-amber">{formatCurrency(e.totalCost)}</td>
+                    <td className="font-mono font-bold text-emerald-400">
+                      {e.calculatedMileage && e.calculatedMileage > 0 ? `${e.calculatedMileage.toFixed(1)} km/L` : '—'}
                     </td>
                     <td>
                       <button
                         onClick={() => setDeleteId(e.id)}
-                        className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
-                        title="Delete fuel entry"
+                        className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
+                        title="Delete entry"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </td>
                   </tr>
@@ -200,14 +212,14 @@ export default function FuelLogPage() {
               })}
             </tbody>
           </table>
-        </Card>
+        </CockpitCard>
       )}
 
       {/* Add Fuel Entry Modal */}
-      <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Log Fuel Fill-up">
+      <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Log Fuel Refill">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="form-group">
-            <label>Select Vehicle *</label>
+            <label>Select Vehicle Unit *</label>
             <select {...register('vehicleId', { required: true })}>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -251,24 +263,24 @@ export default function FuelLogPage() {
             </div>
             <div className="form-group">
               <label>Station Name</label>
-              <input {...register('fuelStationName')} placeholder="e.g. BPCL Outlet" />
+              <input {...register('fuelStationName')} placeholder="e.g. BPCL Mega Outlet" />
             </div>
           </div>
 
           <div className="flex items-center gap-2 pt-1">
-            <input type="checkbox" id="isFullTank" {...register('isFullTank')} defaultChecked className="rounded bg-navy-800" />
-            <label htmlFor="isFullTank" className="text-sm text-slate-300 font-normal cursor-pointer">
-              Full tank refuel (Required for auto km/L calculation)
+            <input type="checkbox" id="isFullTank" {...register('isFullTank')} defaultChecked className="rounded bg-cockpit-surface-2 accent-cockpit-amber" />
+            <label htmlFor="isFullTank" className="text-xs text-cockpit-muted font-normal cursor-pointer">
+              Full tank refuel (Required for rolling km/L calculation)
             </label>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setOpen(false); reset(); }} className="btn-ghost flex-1">
+            <CockpitButton type="button" variant="secondary" onClick={() => { setOpen(false); reset(); }} className="flex-1">
               Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">
-              Save Refill
-            </button>
+            </CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={isSubmitting} className="flex-1">
+              Save Refill Entry
+            </CockpitButton>
           </div>
         </form>
       </Modal>

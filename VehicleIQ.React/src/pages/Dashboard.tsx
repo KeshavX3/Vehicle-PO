@@ -1,12 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Car, Fuel, Receipt, Bell, TrendingUp, Plus, ChevronRight, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Car, Fuel, Receipt, Bell, TrendingUp, Plus, ChevronRight, Activity, Wrench, ShieldAlert } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import StatCard from '../components/ui/StatCard';
-import Card from '../components/ui/Card';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import MetricTile from '../components/cockpit/MetricTile';
+import VehicleHero from '../components/cockpit/VehicleHero';
+import GaugeRing from '../components/cockpit/GaugeRing';
+import TimelineFeed from '../components/cockpit/TimelineFeed';
+import type { TimelineItem } from '../components/cockpit/TimelineFeed';
+import CockpitButton from '../components/cockpit/CockpitButton';
+import InsightBanner from '../components/cockpit/InsightBanner';
+
 import { vehiclesApi } from '../api/vehicles.api';
 import { expensesApi } from '../api/expenses.api';
 import { remindersApi } from '../api/reminders.api';
@@ -14,8 +22,10 @@ import { fuelEntriesApi } from '../api/fuelEntries.api';
 import type { VehicleDto, ExpenseDto, ReminderDto, FuelEntryDto } from '../types';
 import { formatCurrency, formatDate, formatKm, expenseCategoryLabel, expenseCategoryColor, daysUntil } from '../utils/formatters';
 import { ExpenseCategory, ReminderStatus } from '../types';
+import { calculateHealthScore } from '../utils/healthScore';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [expenses, setExpenses] = useState<ExpenseDto[]>([]);
   const [reminders, setReminders] = useState<ReminderDto[]>([]);
@@ -31,7 +41,6 @@ export default function Dashboard() {
       setVehicles(v);
       setExpenses(e);
       setReminders(r);
-      // fetch fuel for first vehicle
       if (v.length > 0) {
         fuelEntriesApi.getByVehicle(v[0].id).then(setFuelEntries).catch(() => {});
       }
@@ -51,7 +60,13 @@ export default function Dashboard() {
   const pendingReminders = reminders.filter(r => r.status === ReminderStatus.Pending);
   const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  // Expense by category pie data
+  // Featured Vehicle
+  const featuredVehicle = vehicles.length > 0 ? vehicles[0] : null;
+  const featuredHealth = featuredVehicle ? calculateHealthScore({
+    hasOverdueReminder: pendingReminders.some(r => r.vehicleId === featuredVehicle.id && daysUntil(r.dueDate) < 0),
+  }) : 100;
+
+  // Expense category pie data
   const categoryTotals = expenses.reduce<Record<number, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] || 0) + e.amount;
     return acc;
@@ -59,10 +74,10 @@ export default function Dashboard() {
   const pieData = Object.entries(categoryTotals).map(([cat, total]) => ({
     name: expenseCategoryLabel[Number(cat) as ExpenseCategory],
     value: total,
-    color: expenseCategoryColor[Number(cat) as ExpenseCategory],
+    color: expenseCategoryColor[Number(cat) as ExpenseCategory] || '#F59E0B',
   })).sort((a, b) => b.value - a.value).slice(0, 5);
 
-  // Monthly expense trend (last 6 months)
+  // Spend trend (last 6 months)
   const trendData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date();
     d.setMonth(d.getMonth() - (5 - i));
@@ -76,183 +91,215 @@ export default function Dashboard() {
     };
   });
 
+  // Timeline feed conversion
+  const timelineItems: TimelineItem[] = pendingReminders.slice(0, 4).map(r => {
+    const days = daysUntil(r.dueDate);
+    const isOverdue = days < 0;
+    return {
+      id: r.id,
+      title: r.title,
+      subtitle: `${r.description || 'Action required'} • Due: ${formatDate(r.dueDate)}`,
+      timestamp: isOverdue ? 'OVERDUE' : days === 0 ? 'TODAY' : `${days}d LEFT`,
+      statusColor: isOverdue ? 'red' : days <= 7 ? 'amber' : 'green',
+      icon: isOverdue ? <ShieldAlert className="w-4 h-4 text-cockpit-red" /> : <Bell className="w-4 h-4 text-cockpit-amber" />,
+    };
+  });
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 animate-pulse">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="glass-card h-32 bg-white/3" />
-        ))}
+      <div className="space-y-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="cockpit-card h-28 bg-cockpit-surface-2/40" />
+          ))}
+        </div>
+        <div className="cockpit-card h-72 bg-cockpit-surface-2/40" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* KPI Row */}
+      {/* Telemetry Alert Banner if pending urgent reminders */}
+      {pendingReminders.length > 0 && (
+        <InsightBanner
+          type="warning"
+          title="Fleet Health Action Required"
+          message={`You have ${pendingReminders.length} pending reminder task(s) awaiting completion.`}
+          action={
+            <CockpitButton size="sm" variant="secondary" onClick={() => navigate('/reminders')}>
+              Review Tasks
+            </CockpitButton>
+          }
+        />
+      )}
+
+      {/* KPI Metric Tiles Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Vehicles"
+        <MetricTile
+          label="Active Fleet Vehicles"
           value={totalVehicles}
-          subtitle="Registered in your garage"
+          unit="units"
           icon={<Car className="w-5 h-5" />}
-          ring="blue"
+          accentColor="amber"
         />
-        <StatCard
-          title="This Month"
+        <MetricTile
+          label="Current Month Spend"
           value={formatCurrency(monthlyExpenses)}
-          subtitle="Total spending"
           icon={<Receipt className="w-5 h-5" />}
-          ring="purple"
+          accentColor="blue"
         />
-        <StatCard
-          title="Total Spent"
+        <MetricTile
+          label="Total All-Time Spend"
           value={formatCurrency(totalSpend)}
-          subtitle="All time vehicle expenses"
           icon={<TrendingUp className="w-5 h-5" />}
-          ring="green"
+          accentColor="green"
         />
-        <StatCard
-          title="Pending Reminders"
+        <MetricTile
+          label="Pending Reminders"
           value={pendingReminders.length}
-          subtitle={pendingReminders.length > 0 ? 'Need your attention' : 'All clear!'}
+          unit="tasks"
           icon={<Bell className="w-5 h-5" />}
-          ring="amber"
-          trend={pendingReminders.length > 0 ? { value: 'Action needed', positive: false } : undefined}
+          accentColor={pendingReminders.length > 0 ? 'red' : 'green'}
+          trend={pendingReminders.length > 0 ? `${pendingReminders.length} Urgent` : 'Optimal'}
+          trendUp={pendingReminders.length === 0}
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Spending Trend */}
-        <Card className="xl:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="section-title">Spending Trend</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Last 6 months</p>
-            </div>
+      {/* Digital Twin Featured Vehicle Hero Banner */}
+      {featuredVehicle ? (
+        <VehicleHero vehicle={featuredVehicle} healthScore={featuredHealth} />
+      ) : (
+        <CockpitCard
+          accent="amber"
+          title="Welcome to VehicleIQ Cockpit"
+          subtitle="No vehicles registered yet in your telemetry garage."
+        >
+          <div className="py-6 text-center">
+            <p className="text-sm text-cockpit-muted mb-4">Add your first vehicle to start tracking fuel logs, expenses, and predictive maintenance dates.</p>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/vehicles')}>
+              Add Vehicle to Garage
+            </CockpitButton>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={trendData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+        </CockpitCard>
+      )}
+
+      {/* Charts & Gauges Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* 6-Month Expenditure Area Chart */}
+        <CockpitCard className="xl:col-span-2" title="Fleet Expenditure Run-Rate" subtitle="6-Month aggregate spending trend">
+          <ResponsiveContainer width="100%" height={240}>
+            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <linearGradient id="colorAmber" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false}
+              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2E" />
+              <XAxis dataKey="month" tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => `₹${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  backgroundColor: '#1C1C1F',
+                  border: '1px solid #2A2A2E',
                   borderRadius: 12,
-                  color: '#ffffff',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.6)',
+                  color: '#F4F4F5',
+                  fontFamily: 'JetBrains Mono',
                   padding: '10px 14px',
                 }}
-                cursor={{ stroke: 'rgba(59, 130, 246, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
-                formatter={(v: unknown) => [formatCurrency(v as number), 'Spent']}
+                cursor={{ stroke: 'rgba(245, 158, 11, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                formatter={(v: unknown) => [formatCurrency(v as number), 'Spend']}
               />
-              <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={2} fill="url(#colorAmount)" />
+              <Area type="monotone" dataKey="amount" stroke="#F59E0B" strokeWidth={2.5} fill="url(#colorAmber)" />
             </AreaChart>
           </ResponsiveContainer>
-        </Card>
+        </CockpitCard>
 
-        {/* Category Pie */}
-        <Card>
-          <h3 className="section-title mb-4">Expense Breakdown</h3>
+        {/* Expense Category Breakdown Ring */}
+        <CockpitCard title="Category Breakdown" subtitle="Expense distribution by module">
           {pieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={80}
-                  paddingAngle={3} dataKey="value">
+                <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
                   {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} stroke="transparent" />
+                    <Cell key={i} fill={entry.color} stroke="#1C1C1F" strokeWidth={2} />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ background: '#0d1530', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }}
+                  contentStyle={{ background: '#1C1C1F', border: '1px solid #2A2A2E', borderRadius: 12, color: '#F4F4F5', fontFamily: 'JetBrains Mono' }}
                   formatter={(v: unknown) => [formatCurrency(v as number)]}
                 />
-                <Legend formatter={(v) => <span className="text-slate-400 text-xs">{v}</span>} />
+                <Legend formatter={(v) => <span className="text-cockpit-muted text-xs font-mono">{v}</span>} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-slate-500 text-sm text-center py-10">No expense data yet</p>
+            <div className="py-12 text-center text-cockpit-muted font-mono text-xs">
+              No expense transactions logged.
+            </div>
           )}
-        </Card>
+        </CockpitCard>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {/* Vehicles */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="section-title">My Vehicles</h3>
-            <Link to="/vehicles" className="text-xs text-accent hover:text-accent-light flex items-center gap-1 transition-colors">
-              View all <ChevronRight className="w-3 h-3" />
+      {/* Telemetry Timeline Feed & Quick Navigation */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <CockpitCard
+          title="Telemetry Activity Feed"
+          subtitle="Upcoming tasks & due notifications"
+          action={
+            <Link to="/reminders" className="text-xs text-cockpit-amber hover:underline flex items-center gap-1 font-mono font-semibold">
+              View All <ChevronRight className="w-3.5 h-3.5" />
             </Link>
-          </div>
+          }
+        >
+          <TimelineFeed items={timelineItems} />
+        </CockpitCard>
+
+        {/* Fleet Garage Quick List */}
+        <CockpitCard
+          title="Garage Vehicles Overview"
+          subtitle="Registered telemetry units"
+          action={
+            <Link to="/vehicles" className="text-xs text-cockpit-amber hover:underline flex items-center gap-1 font-mono font-semibold">
+              Garage Grid <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          }
+        >
           <div className="space-y-3">
-            {vehicles.length === 0 && <p className="text-slate-500 text-sm">No vehicles yet.</p>}
-            {vehicles.slice(0, 3).map(v => (
-              <Link to={`/vehicles/${v.id}`} key={v.id}
-                className="flex items-center gap-4 p-3 rounded-xl bg-white/4 hover:bg-white/8 border border-white/6 hover:border-white/12 transition-all duration-200">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/30 to-indigo-600/30 border border-blue-500/20 flex items-center justify-center">
-                  <Car className="w-5 h-5 text-blue-400" />
+            {vehicles.slice(0, 3).map((v) => (
+              <Link
+                key={v.id}
+                to={`/vehicles/${v.id}`}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-cockpit-surface-2/60 hover:bg-cockpit-surface-2 border border-cockpit-border/50 hover:border-cockpit-amber/30 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cockpit-amber/10 border border-cockpit-amber/20 flex items-center justify-center text-cockpit-amber group-hover:scale-105 transition-transform">
+                    <Car className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-cockpit-text group-hover:text-cockpit-amber transition-colors">
+                      {v.make} {v.model} ({v.year})
+                    </h4>
+                    <p className="text-xs font-mono text-cockpit-muted mt-0.5">
+                      {v.registrationNumber} • {v.currentOdometer.toLocaleString()} km
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{v.make} {v.model} ({v.year})</p>
-                  <p className="text-xs text-slate-500">{v.registrationNumber} · {formatKm(v.currentOdometer)}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
+                <ChevronRight className="w-4 h-4 text-cockpit-muted group-hover:text-cockpit-amber transition-colors" />
               </Link>
             ))}
-          </div>
-          <Link to="/vehicles"
-            className="flex items-center justify-center gap-2 mt-4 py-2.5 rounded-xl border border-dashed border-white/15 text-slate-500 hover:text-white hover:border-white/30 text-sm transition-all duration-200">
-            <Plus className="w-4 h-4" /> Add vehicle
-          </Link>
-        </Card>
 
-        {/* Upcoming Reminders */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="section-title">Upcoming Reminders</h3>
-            <Link to="/reminders" className="text-xs text-accent hover:text-accent-light flex items-center gap-1 transition-colors">
-              View all <ChevronRight className="w-3 h-3" />
-            </Link>
+            <CockpitButton
+              variant="secondary"
+              className="w-full justify-center !py-2.5 text-xs font-semibold"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => navigate('/vehicles')}
+            >
+              Add New Vehicle to Garage
+            </CockpitButton>
           </div>
-          <div className="space-y-3">
-            {pendingReminders.length === 0 && (
-              <p className="text-slate-500 text-sm">All reminders are up to date 🎉</p>
-            )}
-            {pendingReminders.slice(0, 4).map(r => {
-              const days = daysUntil(r.dueDate);
-              const isUrgent = days <= 7;
-              return (
-                <div key={r.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all
-                  ${isUrgent ? 'bg-amber-500/5 border-amber-500/20' : 'bg-white/4 border-white/6'}`}>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
-                    ${isUrgent ? 'bg-amber-500/20 text-amber-400' : 'bg-white/8 text-slate-400'}`}>
-                    {isUrgent ? <AlertTriangle className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{r.title}</p>
-                    <p className="text-xs text-slate-500">{formatDate(r.dueDate)}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full
-                    ${days < 0 ? 'bg-red-500/15 text-red-400' : isUrgent ? 'bg-amber-500/15 text-amber-400' : 'bg-white/8 text-slate-400'}`}>
-                    {days < 0 ? 'Overdue' : days === 0 ? 'Today' : `${days}d`}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+        </CockpitCard>
       </div>
     </div>
   );

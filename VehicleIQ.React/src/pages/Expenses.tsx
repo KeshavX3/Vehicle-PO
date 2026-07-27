@@ -1,23 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Receipt, Plus, Trash2, Filter } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Receipt, Plus, Trash2, TrendingUp, Filter } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import Card from '../components/ui/Card';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import MetricTile from '../components/cockpit/MetricTile';
+import CockpitButton from '../components/cockpit/CockpitButton';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 import { expensesApi } from '../api/expenses.api';
 import { vehiclesApi } from '../api/vehicles.api';
 import type { ExpenseDto, VehicleDto, CreateExpenseRequest } from '../types';
 import { ExpenseCategory } from '../types';
-import { formatCurrency, formatDate, expenseCategoryLabel, expenseCategoryColor } from '../utils/formatters';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-const categoryVariants: Record<number, 'blue'|'green'|'amber'|'red'|'purple'|'slate'> = {
-  0:'blue', 1:'purple', 2:'green', 3:'amber', 4:'slate', 5:'slate', 6:'red', 7:'blue', 8:'green', 99:'slate',
-};
-
-import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+import { formatCurrency, formatDate, expenseCategoryLabel } from '../utils/formatters';
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<ExpenseDto[]>([]);
@@ -33,8 +31,16 @@ export default function Expenses() {
   useEffect(() => { load(); }, []);
 
   const onSubmit = async (data: CreateExpenseRequest) => {
-    await expensesApi.create({ ...data, amount: Number(data.amount), category: Number(data.category), vehicleId: data.vehicleId ? Number(data.vehicleId) : undefined });
-    toast.success('Expense added!'); reset(); setOpen(false); load();
+    await expensesApi.create({
+      ...data,
+      amount: Number(data.amount),
+      category: Number(data.category),
+      vehicleId: data.vehicleId ? Number(data.vehicleId) : undefined
+    });
+    toast.success('Expense transaction logged!');
+    reset();
+    setOpen(false);
+    load();
   };
 
   const confirmDelete = async () => {
@@ -55,7 +61,7 @@ export default function Expenses() {
   const filtered = filter === 'all' ? expenses : expenses.filter(e => e.category === filter);
   const total = filtered.reduce((s, e) => s + e.amount, 0);
 
-  // Bar chart: monthly totals
+  // Bar chart: 6-month totals
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(); d.setMonth(d.getMonth() - (5 - i));
     const m = d.getMonth(); const y = d.getFullYear();
@@ -66,73 +72,115 @@ export default function Expenses() {
   });
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      {/* Top Header Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-slate-400 text-sm">{filtered.length} entries</p>
-          <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
+          <span className="text-xs font-mono uppercase tracking-wider text-cockpit-muted block">Financial Ledger</span>
+          <h2 className="text-2xl font-black font-mono text-cockpit-amber tracking-tight">{formatCurrency(total)}</h2>
         </div>
-        <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" /> Add Expense</button>
+
+        <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
+          Add Expense Entry
+        </CockpitButton>
       </div>
 
-      {/* Bar Chart */}
-      <Card>
-        <h3 className="section-title mb-4">Monthly Spending</h3>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={monthlyData} margin={{ top: 0, right: 5, left: 5, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false}
+      {/* Bar Chart Card */}
+      <CockpitCard title="Monthly Expenditure Run-Rate" subtitle="6-month financial spend telemetry">
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2E" />
+            <XAxis dataKey="month" tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
               tickFormatter={(v) => `₹${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: '#1C1C1F',
+                border: '1px solid #2A2A2E',
                 borderRadius: 12,
-                color: '#ffffff',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.6)',
+                color: '#F4F4F5',
+                fontFamily: 'JetBrains Mono',
                 padding: '10px 14px',
               }}
-              cursor={{ fill: 'rgba(59, 130, 246, 0.08)', stroke: 'rgba(59, 130, 246, 0.2)', strokeWidth: 1, rx: 6 }}
-              formatter={(v: unknown) => [formatCurrency(v as number), 'Spent']}
+              cursor={{ fill: 'rgba(245, 158, 11, 0.08)' }}
+              formatter={(v: unknown) => [formatCurrency(v as number), 'Spend']}
             />
-            <Bar dataKey="amount" fill="#3b82f6" radius={[6,6,0,0]} />
+            <Bar dataKey="amount" fill="#F59E0B" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </Card>
+      </CockpitCard>
 
-      {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setFilter('all')} className={`badge border cursor-pointer transition-all ${filter === 'all' ? 'bg-accent/20 text-accent border-accent/30' : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'}`}>
-          All
+      {/* Category Filter Pills */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <span className="text-xs font-mono text-cockpit-muted mr-2 flex items-center gap-1">
+          <Filter className="w-3.5 h-3.5" /> Filter Category:
+        </span>
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border ${
+            filter === 'all'
+              ? 'bg-cockpit-amber text-black border-cockpit-amber'
+              : 'bg-cockpit-surface-2 text-cockpit-muted border-cockpit-border hover:text-cockpit-text'
+          }`}
+        >
+          ALL ({expenses.length})
         </button>
         {Object.values(ExpenseCategory).filter(v => typeof v === 'number').map((cat) => (
-          <button key={cat as number} onClick={() => setFilter(cat as number)}
-            className={`badge border cursor-pointer transition-all ${filter === cat ? 'bg-accent/20 text-accent border-accent/30' : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'}`}>
+          <button
+            key={cat as number}
+            onClick={() => setFilter(cat as number)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all border ${
+              filter === cat
+                ? 'bg-cockpit-amber text-black border-cockpit-amber'
+                : 'bg-cockpit-surface-2 text-cockpit-muted border-cockpit-border hover:text-cockpit-text'
+            }`}
+          >
             {expenseCategoryLabel[cat as ExpenseCategory]}
           </button>
         ))}
       </div>
 
-      {/* Table */}
+      {/* Expense Receipts Table */}
       {filtered.length === 0 ? (
-        <EmptyState icon={<Receipt className="w-8 h-8" />} title="No expenses found"
-          action={<button onClick={() => setOpen(true)} className="btn-primary">Add First Expense</button>} />
+        <EmptyState
+          icon={<Receipt className="w-8 h-8 text-cockpit-amber" />}
+          title="No expense records found"
+          description="Log vehicle spending to analyze total ownership cost and category distribution."
+          action={<CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>Add First Expense</CockpitButton>}
+        />
       ) : (
-        <Card className="!p-0 overflow-hidden">
+        <CockpitCard className="!p-0 overflow-hidden" title="Receipt Ledger" subtitle="Itemized vehicle expenditure">
           <table className="data-table">
-            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vehicle</th><th className="text-right">Amount</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Vehicle Unit</th>
+                <th className="text-right">Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
             <tbody>
-              {filtered.map(e => (
+              {filtered.map((e) => (
                 <tr key={e.id} className="group">
-                  <td>{formatDate(e.date)}</td>
-                  <td><Badge label={expenseCategoryLabel[e.category]} variant={categoryVariants[e.category] || 'slate'} /></td>
-                  <td className="text-slate-300 max-w-xs truncate">{e.description || '—'}</td>
-                  <td className="text-slate-400 text-xs">{vehicles.find(v => v.id === e.vehicleId)?.registrationNumber || '—'}</td>
-                  <td className="text-right font-semibold text-white">{formatCurrency(e.amount)}</td>
+                  <td className="font-mono text-xs">{formatDate(e.date)}</td>
                   <td>
-                    <button onClick={() => setDeleteId(e.id)} className="btn-danger opacity-0 group-hover:opacity-100 !px-2 !py-1" title="Delete expense">
+                    <span className="px-2.5 py-1 rounded-md border border-cockpit-amber/30 bg-cockpit-amber/10 text-cockpit-amber font-mono text-xs font-semibold">
+                      {expenseCategoryLabel[e.category]}
+                    </span>
+                  </td>
+                  <td className="text-cockpit-text text-xs max-w-xs truncate">{e.description || 'General Vehicle Expense'}</td>
+                  <td className="font-mono text-xs text-cockpit-muted">
+                    {vehicles.find(v => v.id === e.vehicleId)?.registrationNumber || 'Fleet Wide'}
+                  </td>
+                  <td className="text-right font-mono font-bold text-cockpit-amber">{formatCurrency(e.amount)}</td>
+                  <td>
+                    <button
+                      onClick={() => setDeleteId(e.id)}
+                      className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
+                      title="Delete expense"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </td>
@@ -140,13 +188,14 @@ export default function Expenses() {
               ))}
             </tbody>
           </table>
-        </Card>
+        </CockpitCard>
       )}
 
-      <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Add Expense">
+      {/* Add Expense Modal */}
+      <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Add Expense Entry">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="form-group"><label>Date *</label><input type="date" {...register('date', { required: true })} /></div>
+            <div className="form-group"><label>Transaction Date *</label><input type="date" {...register('date', { required: true })} /></div>
             <div className="form-group"><label>Amount (₹) *</label><input type="number" step="0.01" {...register('amount', { required: true })} /></div>
             <div className="form-group"><label>Category *</label>
               <select {...register('category', { required: true })}>
@@ -155,17 +204,21 @@ export default function Expenses() {
                 ))}
               </select>
             </div>
-            <div className="form-group"><label>Vehicle</label>
+            <div className="form-group"><label>Vehicle Unit</label>
               <select {...register('vehicleId')}>
-                <option value="">— None —</option>
-                {vehicles.map(v => <option key={v.id} value={v.id}>{v.make} {v.model}</option>)}
+                <option value="">— Entire Fleet —</option>
+                {vehicles.map(v => <option key={v.id} value={v.id}>{v.make} {v.model} ({v.registrationNumber})</option>)}
               </select>
             </div>
           </div>
-          <div className="form-group"><label>Description</label><input {...register('description')} placeholder="Brief note…" /></div>
-          <div className="flex gap-3 pt-1">
-            <button type="button" onClick={() => { setOpen(false); reset(); }} className="btn-ghost flex-1">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">Save Expense</button>
+          <div className="form-group"><label>Description</label><input {...register('description')} placeholder="Fuel station, FASTag toll, oil change..." /></div>
+          <div className="flex gap-3 pt-2">
+            <CockpitButton type="button" variant="secondary" onClick={() => { setOpen(false); reset(); }} className="flex-1">
+              Cancel
+            </CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={isSubmitting} className="flex-1">
+              Save Expense Entry
+            </CockpitButton>
           </div>
         </form>
       </Modal>

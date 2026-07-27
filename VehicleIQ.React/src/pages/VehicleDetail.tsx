@@ -1,12 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Car, Fuel, Wrench, Shield, FileCheck, Gauge, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Car, Fuel, Wrench, Shield, FileCheck, Gauge, Plus, Activity, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import Card from '../components/ui/Card';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import GaugeRing from '../components/cockpit/GaugeRing';
+import RegistrationPlate from '../components/cockpit/RegistrationPlate';
+import HealthScoreBadge from '../components/cockpit/HealthScoreBadge';
+import TimelineFeed from '../components/cockpit/TimelineFeed';
+import type { TimelineItem } from '../components/cockpit/TimelineFeed';
+import CockpitButton from '../components/cockpit/CockpitButton';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
+
 import { vehiclesApi } from '../api/vehicles.api';
 import { fuelEntriesApi } from '../api/fuelEntries.api';
 import { serviceRecordsApi } from '../api/serviceRecords.api';
@@ -22,6 +29,7 @@ import {
   fuelTypeLabel, serviceTypeLabel, insuranceCoverageLabel,
   isExpired, isExpiringSoon, daysUntil, vehicleTypeLabel,
 } from '../utils/formatters';
+import { calculateHealthScore } from '../utils/healthScore';
 
 type Tab = 'overview' | 'fuel' | 'service' | 'insurance' | 'puc';
 
@@ -81,190 +89,305 @@ export default function VehicleDetail() {
   };
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'overview',  label: 'Overview',  icon: <Car className="w-4 h-4" /> },
-    { key: 'fuel',      label: 'Fuel Log',  icon: <Fuel className="w-4 h-4" /> },
-    { key: 'service',   label: 'Service',   icon: <Wrench className="w-4 h-4" /> },
-    { key: 'insurance', label: 'Insurance', icon: <Shield className="w-4 h-4" /> },
-    { key: 'puc',       label: 'PUC',       icon: <FileCheck className="w-4 h-4" /> },
+    { key: 'overview',  label: 'Digital Twin Overview', icon: <Car className="w-4 h-4" /> },
+    { key: 'fuel',      label: 'Fuel Log',              icon: <Fuel className="w-4 h-4" /> },
+    { key: 'service',   label: 'Service History',       icon: <Wrench className="w-4 h-4" /> },
+    { key: 'insurance', label: 'Insurance Vault',       icon: <Shield className="w-4 h-4" /> },
+    { key: 'puc',       label: 'PUC Certificates',      icon: <FileCheck className="w-4 h-4" /> },
   ];
 
-  if (loading) return <div className="glass-card h-96 animate-pulse bg-white/3" />;
-  if (!vehicle) return <p className="text-red-400">Vehicle not found.</p>;
+  if (loading) return <div className="cockpit-card h-96 animate-pulse bg-cockpit-surface-2/40" />;
+  if (!vehicle) return <p className="text-cockpit-red font-mono p-4">Vehicle unit not found.</p>;
 
   const activeInsurance = insurances.find(i => !isExpired(i.endDate));
   const latestPuc = pucs[0];
 
+  const validMileages = fuelEntries.filter(f => f.calculatedMileage && f.calculatedMileage > 0).map(f => Number(f.calculatedMileage));
+  const avgMileage = validMileages.length > 0 ? (validMileages.reduce((a, b) => a + b, 0) / validMileages.length) : 14.5;
+  const health = calculateHealthScore({
+    insuranceDaysLeft: activeInsurance ? daysUntil(activeInsurance.endDate) : null,
+    pucDaysLeft: latestPuc ? daysUntil(latestPuc.expiryDate) : null,
+  });
+
+  const timelineItems: TimelineItem[] = [
+    ...fuelEntries.slice(0, 3).map(f => ({
+      id: `f-${f.id}`,
+      title: `Fuel Refuel: ${f.quantity.toFixed(1)}L`,
+      subtitle: `${f.fuelStationName || 'Fuel Station'} • Cost: ₹${f.totalCost}`,
+      timestamp: formatDate(f.date),
+      statusColor: 'green' as const,
+      icon: <Fuel className="w-4 h-4 text-emerald-400" />,
+    })),
+    ...serviceRecords.slice(0, 3).map(s => ({
+      id: `s-${s.id}`,
+      title: serviceTypeLabel[s.serviceType],
+      subtitle: `${s.garageName || 'Workshop'} • Cost: ₹${s.cost}`,
+      timestamp: formatDate(s.date),
+      statusColor: 'amber' as const,
+      icon: <Wrench className="w-4 h-4 text-cockpit-amber" />,
+    })),
+  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
+
   return (
-    <div className="space-y-5">
-      {/* Back + Header */}
+    <div className="space-y-6">
+      {/* Top Navigation & Digital Twin Header */}
       <div className="flex items-center gap-4">
         <Link to="/vehicles" className="btn-ghost !px-3 !py-2">
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <div>
-          <h2 className="text-xl font-bold text-white">{vehicle.make} {vehicle.model} <span className="text-slate-500 font-normal">({vehicle.year})</span></h2>
-          <p className="text-sm text-slate-400">{vehicle.registrationNumber} · {vehicleTypeLabel[vehicle.vehicleType]}</p>
+        <div className="flex-1 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-extrabold text-cockpit-text tracking-tight">
+                {vehicle.make} {vehicle.model}
+              </h2>
+              <RegistrationPlate registrationNumber={vehicle.registrationNumber} size="sm" />
+            </div>
+            <p className="text-xs font-mono text-cockpit-muted mt-1">
+              {vehicle.year} Model • {vehicleTypeLabel[vehicle.vehicleType]} • {fuelTypeLabel[vehicle.fuelType]}
+            </p>
+          </div>
+
+          <HealthScoreBadge score={health} size="lg" />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-white/10 overflow-x-auto">
+      <div className="flex gap-1 border-b border-cockpit-border overflow-x-auto">
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`tab-btn flex items-center gap-2 ${tab === t.key ? 'active' : ''}`}>
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`tab-btn flex items-center gap-2 font-mono text-xs ${tab === t.key ? 'active' : ''}`}
+          >
             {t.icon} {t.label}
           </button>
         ))}
       </div>
 
-      {/* ── OVERVIEW ── */}
+      {/* ── OVERVIEW TAB ── */}
       {tab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-up">
-          <Card className="md:col-span-2">
-            <h3 className="section-title mb-4">Vehicle Details</h3>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-              {[
-                ['Make', vehicle.make], ['Model', vehicle.model], ['Year', vehicle.year],
-                ['Registration', vehicle.registrationNumber], ['Color', vehicle.color || '—'],
-                ['Fuel Type', fuelTypeLabel[vehicle.fuelType]],
-              ].map(([l, v]) => (
-                <div key={l as string}>
-                  <dt className="text-slate-500 mb-0.5">{l}</dt>
-                  <dd className="text-white font-medium">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </Card>
-          <div className="space-y-4">
-            <Card>
-              <div className="flex items-center gap-3 mb-2">
-                <Gauge className="w-5 h-5 text-blue-400" />
-                <span className="text-sm text-slate-400">Odometer</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{formatKm(vehicle.currentOdometer)}</p>
-            </Card>
-            <Card>
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="w-5 h-5 text-emerald-400" />
-                <span className="text-sm text-slate-400">Insurance</span>
-              </div>
-              {activeInsurance ? (
-                <>
-                  <p className="text-sm font-semibold text-white">{activeInsurance.provider}</p>
-                  <p className="text-xs text-slate-500">Expires {formatDate(activeInsurance.endDate)}</p>
-                  {isExpiringSoon(activeInsurance.endDate) && <Badge label={`${daysUntil(activeInsurance.endDate)}d left`} variant="amber" dot />}
-                </>
-              ) : <p className="text-sm text-red-400">No active insurance</p>}
-            </Card>
-            <Card>
-              <div className="flex items-center gap-3 mb-2">
-                <FileCheck className="w-5 h-5 text-violet-400" />
-                <span className="text-sm text-slate-400">PUC</span>
-              </div>
-              {latestPuc ? (
-                <>
-                  <p className="text-xs text-slate-500">Expires {formatDate(latestPuc.expiryDate)}</p>
-                  {isExpired(latestPuc.expiryDate) ? <Badge label="Expired" variant="red" dot /> :
-                    isExpiringSoon(latestPuc.expiryDate) ? <Badge label="Expiring Soon" variant="amber" dot /> :
-                    <Badge label="Valid" variant="green" dot />}
-                </>
-              ) : <p className="text-sm text-red-400">No PUC on record</p>}
-            </Card>
+        <div className="space-y-6 animate-fade-in">
+          {/* Instrument Gauges Strip */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CockpitCard className="flex flex-col items-center justify-center p-6 text-center">
+              <GaugeRing
+                value={vehicle.currentOdometer}
+                max={100000}
+                label="Odometer Distance"
+                unit="km"
+                color="amber"
+                size="lg"
+                subtext="Current Reading"
+              />
+            </CockpitCard>
+
+            <CockpitCard className="flex flex-col items-center justify-center p-6 text-center">
+              <GaugeRing
+                value={avgMileage}
+                max={30}
+                label="Fuel Economy Baseline"
+                unit="km/L"
+                color="green"
+                size="lg"
+                subtext="Rolling Mileage"
+              />
+            </CockpitCard>
+
+            <CockpitCard className="flex flex-col items-center justify-center p-6 text-center">
+              <GaugeRing
+                value={health}
+                max={100}
+                label="Vehicle Telemetry Health"
+                unit="pts"
+                color={health >= 80 ? 'green' : health >= 50 ? 'amber' : 'red'}
+                size="lg"
+                subtext="System Integrity"
+              />
+            </CockpitCard>
+          </div>
+
+          {/* Details & Telemetry Activity Feed Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <CockpitCard className="xl:col-span-2" title="Specification Ledger" subtitle="Vehicle unit registration specs">
+              <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 text-xs font-mono">
+                {[
+                  ['Make', vehicle.make],
+                  ['Model', vehicle.model],
+                  ['Year', vehicle.year],
+                  ['Registration No.', vehicle.registrationNumber],
+                  ['Color', vehicle.color || 'Custom'],
+                  ['Fuel Type', fuelTypeLabel[vehicle.fuelType]],
+                  ['Vehicle Type', vehicleTypeLabel[vehicle.vehicleType]],
+                  ['Current Odometer', `${vehicle.currentOdometer.toLocaleString()} km`],
+                  ['System Status', 'Active & Operational'],
+                ].map(([l, v]) => (
+                  <div key={l as string} className="p-2.5 rounded-lg bg-cockpit-surface-2/60 border border-cockpit-border/40">
+                    <dt className="text-cockpit-muted text-[10px] uppercase font-semibold mb-1">{l}</dt>
+                    <dd className="text-cockpit-text font-bold text-sm">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </CockpitCard>
+
+            {/* Telemetry Activity Feed */}
+            <CockpitCard title="Telemetry Event Log" subtitle="Recent fuel & service events">
+              <TimelineFeed items={timelineItems} />
+            </CockpitCard>
           </div>
         </div>
       )}
 
-      {/* ── FUEL ── */}
+      {/* ── FUEL TAB ── */}
       {tab === 'fuel' && (
-        <div className="animate-slide-up space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="flex justify-end">
-            <button onClick={() => setModal('fuel')} className="btn-primary"><Plus className="w-4 h-4" /> Add Fuel Entry</button>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('fuel')}>
+              Log Fuel Fill-Up
+            </CockpitButton>
           </div>
           {fuelEntries.length === 0 ? (
-            <EmptyState icon={<Fuel className="w-8 h-8" />} title="No fuel entries" description="Start tracking to see mileage trends." action={<button onClick={() => setModal('fuel')} className="btn-primary">Add First Entry</button>} />
+            <EmptyState
+              icon={<Fuel className="w-8 h-8 text-cockpit-amber" />}
+              title="No fuel entries"
+              description="Start tracking fill-ups to calculate rolling mileage efficiency."
+              action={<CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('fuel')}>Add First Entry</CockpitButton>}
+            />
           ) : (
-            <Card className="!p-0 overflow-hidden">
+            <CockpitCard className="!p-0 overflow-hidden">
               <table className="data-table">
-                <thead><tr><th>Date</th><th>Fuel</th><th>Qty (L)</th><th>Rate</th><th>Total</th><th>Odometer</th><th>Mileage</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Fuel Type</th>
+                    <th>Qty (L)</th>
+                    <th>Price/L</th>
+                    <th>Total Cost</th>
+                    <th>Odometer</th>
+                    <th>Mileage</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {fuelEntries.map(f => (
+                  {fuelEntries.map((f) => (
                     <tr key={f.id}>
-                      <td>{formatDate(f.date)}</td>
-                      <td><Badge label={fuelTypeLabel[f.fuelType]} variant="blue" /></td>
-                      <td>{f.quantity.toFixed(2)}</td>
-                      <td>₹{f.pricePerLiter.toFixed(2)}</td>
-                      <td className="font-semibold text-white">{formatCurrency(f.totalCost)}</td>
-                      <td>{formatKm(f.odometerReading)}</td>
-                      <td className="text-emerald-400">{formatMileage(f.calculatedMileage ?? undefined)}</td>
+                      <td className="font-mono text-xs">{formatDate(f.date)}</td>
+                      <td>
+                        <span className="px-2 py-0.5 rounded text-xs font-mono border border-cockpit-blue/30 bg-cockpit-blue/10 text-cockpit-blue">
+                          {fuelTypeLabel[f.fuelType]}
+                        </span>
+                      </td>
+                      <td className="font-mono font-bold">{f.quantity.toFixed(2)}</td>
+                      <td className="font-mono">₹{f.pricePerLiter.toFixed(2)}</td>
+                      <td className="font-mono font-bold text-cockpit-amber">₹{f.totalCost.toLocaleString()}</td>
+                      <td className="font-mono">{f.odometerReading.toLocaleString()} km</td>
+                      <td className="font-mono font-bold text-emerald-400">
+                        {f.calculatedMileage ? `${f.calculatedMileage.toFixed(1)} km/L` : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </CockpitCard>
           )}
         </div>
       )}
 
-      {/* ── SERVICE ── */}
+      {/* ── SERVICE TAB ── */}
       {tab === 'service' && (
-        <div className="animate-slide-up space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="flex justify-end">
-            <button onClick={() => setModal('service')} className="btn-primary"><Plus className="w-4 h-4" /> Add Service</button>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('service')}>
+              Log Service Record
+            </CockpitButton>
           </div>
           {serviceRecords.length === 0 ? (
-            <EmptyState icon={<Wrench className="w-8 h-8" />} title="No service records" description="Track every maintenance event." action={<button onClick={() => setModal('service')} className="btn-primary">Add Record</button>} />
+            <EmptyState
+              icon={<Wrench className="w-8 h-8 text-cockpit-amber" />}
+              title="No service records"
+              description="Keep a detailed log of every maintenance event and oil change."
+              action={<CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('service')}>Add Service Record</CockpitButton>}
+            />
           ) : (
-            <Card className="!p-0 overflow-hidden">
+            <CockpitCard className="!p-0 overflow-hidden">
               <table className="data-table">
-                <thead><tr><th>Date</th><th>Type</th><th>Garage</th><th>Cost</th><th>Next Service</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Service Type</th>
+                    <th>Garage / Workshop</th>
+                    <th>Cost</th>
+                    <th>Next Target Date</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {serviceRecords.map(s => (
+                  {serviceRecords.map((s) => (
                     <tr key={s.id}>
-                      <td>{formatDate(s.date)}</td>
-                      <td><Badge label={serviceTypeLabel[s.serviceType]} variant="purple" /></td>
-                      <td className="text-slate-300">{s.garageName || '—'}</td>
-                      <td className="font-semibold text-white">{formatCurrency(s.cost)}</td>
-                      <td className="text-slate-400">{s.nextServiceDate ? formatDate(s.nextServiceDate) : '—'}</td>
+                      <td className="font-mono text-xs">{formatDate(s.date)}</td>
+                      <td>
+                        <span className="px-2 py-0.5 rounded text-xs font-mono border border-purple-500/30 bg-purple-500/10 text-purple-300">
+                          {serviceTypeLabel[s.serviceType]}
+                        </span>
+                      </td>
+                      <td className="font-medium text-cockpit-text">{s.garageName || 'Authorized Workshop'}</td>
+                      <td className="font-mono font-bold text-cockpit-amber">₹{s.cost.toLocaleString()}</td>
+                      <td className="font-mono text-cockpit-muted">{s.nextServiceDate ? formatDate(s.nextServiceDate) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </Card>
+            </CockpitCard>
           )}
         </div>
       )}
 
-      {/* ── INSURANCE ── */}
+      {/* ── INSURANCE TAB ── */}
       {tab === 'insurance' && (
-        <div className="animate-slide-up space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="flex justify-end">
-            <button onClick={() => setModal('insurance')} className="btn-primary"><Plus className="w-4 h-4" /> Add Insurance</button>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('insurance')}>
+              Add Policy
+            </CockpitButton>
           </div>
           {insurances.length === 0 ? (
-            <EmptyState icon={<Shield className="w-8 h-8" />} title="No insurance records" action={<button onClick={() => setModal('insurance')} className="btn-primary">Add Policy</button>} />
+            <EmptyState
+              icon={<Shield className="w-8 h-8 text-cockpit-amber" />}
+              title="No insurance records"
+              description="Store insurance policies and receive expiration warnings."
+              action={<CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('insurance')}>Add Insurance Policy</CockpitButton>}
+            />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {insurances.map(ins => {
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {insurances.map((ins) => {
                 const expired = isExpired(ins.endDate);
                 const expiringSoon = !expired && isExpiringSoon(ins.endDate);
                 return (
-                  <Card key={ins.id} className={expired ? 'border-red-500/20' : expiringSoon ? 'border-amber-500/20' : ''}>
-                    <div className="flex items-start justify-between mb-3">
+                  <CockpitCard
+                    key={ins.id}
+                    accent={expired ? 'red' : expiringSoon ? 'amber' : 'green'}
+                    title={ins.provider}
+                    subtitle={`Policy No: ${ins.policyNumber}`}
+                  >
+                    <dl className="grid grid-cols-2 gap-3 text-xs font-mono">
                       <div>
-                        <h4 className="font-semibold text-white">{ins.provider}</h4>
-                        <p className="text-xs text-slate-500">{ins.policyNumber}</p>
+                        <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Coverage</dt>
+                        <dd className="text-cockpit-text font-bold mt-0.5">{insuranceCoverageLabel[ins.coverageType]}</dd>
                       </div>
-                      {expired ? <Badge label="Expired" variant="red" dot /> :
-                        expiringSoon ? <Badge label="Expiring Soon" variant="amber" dot /> :
-                        <Badge label="Active" variant="green" dot />}
-                    </div>
-                    <dl className="grid grid-cols-2 gap-2 text-sm">
-                      <div><dt className="text-slate-500 text-xs">Coverage</dt><dd className="text-white">{insuranceCoverageLabel[ins.coverageType]}</dd></div>
-                      <div><dt className="text-slate-500 text-xs">Premium</dt><dd className="text-white font-semibold">{formatCurrency(ins.premiumAmount)}</dd></div>
-                      <div><dt className="text-slate-500 text-xs">Start</dt><dd className="text-white">{formatDate(ins.startDate)}</dd></div>
-                      <div><dt className="text-slate-500 text-xs">Expiry</dt><dd className={expired ? 'text-red-400' : expiringSoon ? 'text-amber-400' : 'text-white'}>{formatDate(ins.endDate)}</dd></div>
+                      <div>
+                        <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Annual Premium</dt>
+                        <dd className="text-cockpit-amber font-bold mt-0.5">₹{ins.premiumAmount.toLocaleString()}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Start Date</dt>
+                        <dd className="text-cockpit-text font-bold mt-0.5">{formatDate(ins.startDate)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Expiration Date</dt>
+                        <dd className={`font-bold mt-0.5 ${expired ? 'text-cockpit-red' : expiringSoon ? 'text-cockpit-amber' : 'text-cockpit-green'}`}>
+                          {formatDate(ins.endDate)}
+                        </dd>
+                      </div>
                     </dl>
-                  </Card>
+                  </CockpitCard>
                 );
               })}
             </div>
@@ -272,40 +395,59 @@ export default function VehicleDetail() {
         </div>
       )}
 
-      {/* ── PUC ── */}
+      {/* ── PUC TAB ── */}
       {tab === 'puc' && (
-        <div className="animate-slide-up space-y-4">
+        <div className="space-y-4 animate-fade-in">
           <div className="flex justify-end">
-            <button onClick={() => setModal('puc')} className="btn-primary"><Plus className="w-4 h-4" /> Add PUC</button>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('puc')}>
+              Add PUC Certificate
+            </CockpitButton>
           </div>
           {pucs.length === 0 ? (
-            <EmptyState icon={<FileCheck className="w-8 h-8" />} title="No PUC records" action={<button onClick={() => setModal('puc')} className="btn-primary">Add Certificate</button>} />
+            <EmptyState
+              icon={<FileCheck className="w-8 h-8 text-cockpit-amber" />}
+              title="No PUC certificates"
+              description="Keep emission test certificates updated for statutory compliance."
+              action={<CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setModal('puc')}>Add PUC Certificate</CockpitButton>}
+            />
           ) : (
-            <Card className="!p-0 overflow-hidden">
+            <CockpitCard className="!p-0 overflow-hidden">
               <table className="data-table">
-                <thead><tr><th>Issue Date</th><th>Expiry Date</th><th>Certificate No.</th><th>Emission</th><th>Status</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Issue Date</th>
+                    <th>Expiry Date</th>
+                    <th>Certificate No.</th>
+                    <th>Emission Compliance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {pucs.map(p => {
+                  {pucs.map((p) => {
                     const expired = isExpired(p.expiryDate);
                     return (
                       <tr key={p.id}>
-                        <td>{formatDate(p.date)}</td>
-                        <td>{formatDate(p.expiryDate)}</td>
-                        <td className="font-mono text-slate-300">{p.certificateNumber || '—'}</td>
-                        <td>{p.emissionLevel || '—'}</td>
-                        <td>{expired ? <Badge label="Expired" variant="red" dot /> : isExpiringSoon(p.expiryDate) ? <Badge label="Expiring" variant="amber" dot /> : <Badge label="Valid" variant="green" dot />}</td>
+                        <td className="font-mono text-xs">{formatDate(p.date)}</td>
+                        <td className="font-mono text-xs">{formatDate(p.expiryDate)}</td>
+                        <td className="font-mono text-cockpit-text">{p.certificateNumber || '—'}</td>
+                        <td className="font-mono text-cockpit-muted">{p.emissionLevel || 'BS-VI Pass'}</td>
+                        <td>
+                          <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold ${expired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                            {expired ? 'EXPIRED' : 'VALID'}
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            </Card>
+            </CockpitCard>
           )}
         </div>
       )}
 
       {/* ── Modals ── */}
-      <Modal open={modal === 'fuel'} onClose={closeModal} title="Add Fuel Entry">
+      <Modal open={modal === 'fuel'} onClose={closeModal} title="Log Fuel Entry">
         <form onSubmit={fuelForm.handleSubmit(onAddFuel)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="form-group"><label>Date *</label><input type="date" {...fuelForm.register('date', { required: true })} /></div>
@@ -319,13 +461,9 @@ export default function VehicleDetail() {
             <div className="form-group"><label>Odometer (km) *</label><input type="number" {...fuelForm.register('odometerReading', { required: true })} /></div>
             <div className="form-group"><label>Station Name</label><input {...fuelForm.register('fuelStationName')} placeholder="HP, BPCL…" /></div>
           </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="fullTank" {...fuelForm.register('isFullTank')} className="w-4 h-4 rounded accent-blue-500" />
-            <label htmlFor="fullTank" className="cursor-pointer">Full tank fill-up</label>
-          </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
-            <button type="submit" disabled={fuelForm.formState.isSubmitting} className="btn-primary flex-1 justify-center">Save Entry</button>
+            <CockpitButton type="button" variant="secondary" onClick={closeModal} className="flex-1">Cancel</CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={fuelForm.formState.isSubmitting} className="flex-1">Save Entry</CockpitButton>
           </div>
         </form>
       </Modal>
@@ -346,8 +484,8 @@ export default function VehicleDetail() {
           </div>
           <div className="form-group"><label>Description</label><input {...serviceForm.register('description')} /></div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
-            <button type="submit" disabled={serviceForm.formState.isSubmitting} className="btn-primary flex-1 justify-center">Save Record</button>
+            <CockpitButton type="button" variant="secondary" onClick={closeModal} className="flex-1">Cancel</CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={serviceForm.formState.isSubmitting} className="flex-1">Save Record</CockpitButton>
           </div>
         </form>
       </Modal>
@@ -367,8 +505,8 @@ export default function VehicleDetail() {
             <div className="form-group"><label>End Date *</label><input type="date" {...insuranceForm.register('endDate', { required: true })} /></div>
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
-            <button type="submit" disabled={insuranceForm.formState.isSubmitting} className="btn-primary flex-1 justify-center">Save Policy</button>
+            <CockpitButton type="button" variant="secondary" onClick={closeModal} className="flex-1">Cancel</CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={insuranceForm.formState.isSubmitting} className="flex-1">Save Policy</CockpitButton>
           </div>
         </form>
       </Modal>
@@ -379,11 +517,11 @@ export default function VehicleDetail() {
             <div className="form-group"><label>Issue Date *</label><input type="date" {...pucForm.register('date', { required: true })} /></div>
             <div className="form-group"><label>Expiry Date *</label><input type="date" {...pucForm.register('expiryDate', { required: true })} /></div>
             <div className="form-group"><label>Certificate No.</label><input {...pucForm.register('certificateNumber')} /></div>
-            <div className="form-group"><label>Emission Level</label><input {...pucForm.register('emissionLevel')} placeholder="BS6…" /></div>
+            <div className="form-group"><label>Emission Level</label><input {...pucForm.register('emissionLevel')} placeholder="BS6 Pass…" /></div>
           </div>
           <div className="flex gap-3 pt-1">
-            <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
-            <button type="submit" disabled={pucForm.formState.isSubmitting} className="btn-primary flex-1 justify-center">Save Certificate</button>
+            <CockpitButton type="button" variant="secondary" onClick={closeModal} className="flex-1">Cancel</CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={pucForm.formState.isSubmitting} className="flex-1">Save Certificate</CockpitButton>
           </div>
         </form>
       </Modal>

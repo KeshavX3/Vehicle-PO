@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
-import { FileCheck, Plus, Trash2, Calendar, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { FileCheck, Plus, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import Card from '../components/ui/Card';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import RegistrationPlate from '../components/cockpit/RegistrationPlate';
+import CockpitButton from '../components/cockpit/CockpitButton';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+
 import { pucCertificatesApi } from '../api/pucCertificates.api';
 import { vehiclesApi } from '../api/vehicles.api';
 import type { PucCertificateDto, VehicleDto, CreatePucCertificateRequest } from '../types';
 import { formatDate, daysUntil } from '../utils/formatters';
-
-import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
 
 export default function PucPage() {
   const [pucs, setPucs] = useState<PucCertificateDto[]>([]);
@@ -63,25 +65,29 @@ export default function PucPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <p className="text-slate-400 text-sm">{pucs.length} PUC certificates on file</p>
-        <button onClick={() => setOpen(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Add PUC Certificate
-        </button>
+        <div>
+          <h2 className="text-xl font-extrabold text-cockpit-text">Emission Testing Vault</h2>
+          <p className="text-xs font-mono text-cockpit-muted mt-0.5">{pucs.length} PUC certificates on file</p>
+        </div>
+
+        <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
+          Add PUC Certificate
+        </CockpitButton>
       </div>
 
       {pucs.length === 0 ? (
         <EmptyState
-          icon={<FileCheck className="w-8 h-8 text-accent" />}
+          icon={<FileCheck className="w-8 h-8 text-cockpit-amber" />}
           title="No PUC certificates logged"
-          description="Keep track of emission compliance tests and renewal dates."
+          description="Keep track of emission compliance tests and statutory renewal dates."
           action={
-            <button onClick={() => setOpen(true)} className="btn-primary">
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
               Add First PUC
-            </button>
+            </CockpitButton>
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {pucs.map((puc) => {
             const vehicle = vehicles.find((v) => v.id === puc.vehicleId);
             const daysLeft = daysUntil(puc.expiryDate);
@@ -89,57 +95,35 @@ export default function PucPage() {
             const isExpiringSoon = !isExpired && daysLeft <= 15;
 
             return (
-              <div
+              <CockpitCard
                 key={puc.id}
-                className={`glass-card p-5 hover:border-white/15 transition-all duration-300 group flex flex-col justify-between ${
-                  isExpired
-                    ? 'border-red-500/30 bg-red-500/5'
-                    : isExpiringSoon
-                    ? 'border-amber-500/30 bg-amber-500/5'
-                    : ''
-                }`}
+                accent={isExpired ? 'red' : isExpiringSoon ? 'amber' : 'green'}
+                title={puc.certificateNumber || 'PUC Certificate'}
+                subtitle={puc.emissionLevel || 'BS-VI Emission Pass'}
+                action={
+                  <button
+                    onClick={() => setDeleteId(puc.id)}
+                    className="btn-cockpit-danger !p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete certificate"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                }
               >
-                <div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
-                      <FileCheck className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        label={isExpired ? 'Expired' : isExpiringSoon ? `${daysLeft}d Left` : 'Valid'}
-                        variant={isExpired ? 'red' : isExpiringSoon ? 'amber' : 'purple'}
-                        dot
-                      />
-                      <button
-                        onClick={() => setDeleteId(puc.id)}
-                        className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
-                        title="Delete PUC certificate"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                {vehicle && (
+                  <div className="mb-4 p-2.5 rounded-lg bg-cockpit-surface-2/60 border border-cockpit-border flex items-center justify-between">
+                    <span className="text-xs font-bold text-cockpit-text">{vehicle.make} {vehicle.model}</span>
+                    <RegistrationPlate registrationNumber={vehicle.registrationNumber} size="sm" />
                   </div>
+                )}
 
-                  <h3 className="font-bold text-white text-base">{puc.certificateNumber}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{puc.emissionLevel || 'BS-VI Compliant'}</p>
-
-                  {vehicle && (
-                    <div className="mt-3 p-2.5 rounded-xl bg-white/4 border border-white/6 flex items-center justify-between">
-                      <span className="text-xs text-slate-300 font-medium">
-                        {vehicle.make} {vehicle.model}
-                      </span>
-                      <span className="text-[11px] font-mono text-slate-400">{vehicle.registrationNumber}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-white/8 flex items-center justify-between text-xs text-slate-400">
-                  <span>Issued: {formatDate(puc.date)}</span>
-                  <span className={isExpired ? 'text-red-400 font-semibold' : 'text-slate-300'}>
+                <div className="mt-4 pt-3 border-t border-cockpit-border flex items-center justify-between text-xs font-mono">
+                  <span className="text-cockpit-muted">Issued: {formatDate(puc.date)}</span>
+                  <span className={isExpired ? 'text-cockpit-red font-bold' : 'text-cockpit-green font-bold'}>
                     Expires: {formatDate(puc.expiryDate)}
                   </span>
                 </div>
-              </div>
+              </CockpitCard>
             );
           })}
         </div>
@@ -149,7 +133,7 @@ export default function PucPage() {
       <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Add PUC Certificate">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="form-group">
-            <label>Select Vehicle *</label>
+            <label>Select Vehicle Unit *</label>
             <select {...register('vehicleId', { required: true })}>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -181,12 +165,12 @@ export default function PucPage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setOpen(false); reset(); }} className="btn-ghost flex-1">
+            <CockpitButton type="button" variant="secondary" onClick={() => { setOpen(false); reset(); }} className="flex-1">
               Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">
+            </CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={isSubmitting} className="flex-1">
               Save Certificate
-            </button>
+            </CockpitButton>
           </div>
         </form>
       </Modal>

@@ -1,18 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Shield, Plus, Trash2, Calendar, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Shield, Plus, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import Card from '../components/ui/Card';
+
+import CockpitCard from '../components/cockpit/CockpitCard';
+import MetricTile from '../components/cockpit/MetricTile';
+import CockpitButton from '../components/cockpit/CockpitButton';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
+import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
+import RegistrationPlate from '../components/cockpit/RegistrationPlate';
+
 import { insuranceApi } from '../api/insurance.api';
 import { vehiclesApi } from '../api/vehicles.api';
 import type { InsuranceDto, VehicleDto, CreateInsuranceRequest } from '../types';
 import { InsuranceCoverageType } from '../types';
 import { formatCurrency, formatDate, daysUntil, insuranceCoverageLabel } from '../utils/formatters';
-
-import ConfirmDeleteModal from '../components/ui/ConfirmDeleteModal';
 
 export default function InsurancePage() {
   const [insurances, setInsurances] = useState<InsuranceDto[]>([]);
@@ -66,25 +69,29 @@ export default function InsurancePage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <p className="text-slate-400 text-sm">{insurances.length} policies registered</p>
-        <button onClick={() => setOpen(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Add Insurance Policy
-        </button>
+        <div>
+          <h2 className="text-xl font-extrabold text-cockpit-text">Insurance Vault</h2>
+          <p className="text-xs font-mono text-cockpit-muted mt-0.5">{insurances.length} active policies registered</p>
+        </div>
+
+        <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
+          Add Insurance Policy
+        </CockpitButton>
       </div>
 
       {insurances.length === 0 ? (
         <EmptyState
-          icon={<Shield className="w-8 h-8 text-accent" />}
+          icon={<Shield className="w-8 h-8 text-cockpit-amber" />}
           title="No insurance policies on record"
           description="Keep track of your vehicle insurance policies, coverage types, and renewal due dates."
           action={
-            <button onClick={() => setOpen(true)} className="btn-primary">
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
               Add First Policy
-            </button>
+            </CockpitButton>
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {insurances.map((ins) => {
             const vehicle = vehicles.find((v) => v.id === ins.vehicleId);
             const daysLeft = daysUntil(ins.endDate);
@@ -92,72 +99,49 @@ export default function InsurancePage() {
             const isExpiringSoon = !isExpired && daysLeft <= 30;
 
             return (
-              <div
+              <CockpitCard
                 key={ins.id}
-                className={`glass-card p-5 hover:border-white/15 transition-all duration-300 group flex flex-col justify-between ${
-                  isExpired
-                    ? 'border-red-500/30 bg-red-500/5'
-                    : isExpiringSoon
-                    ? 'border-amber-500/30 bg-amber-500/5'
-                    : ''
-                }`}
+                accent={isExpired ? 'red' : isExpiringSoon ? 'amber' : 'green'}
+                title={ins.provider}
+                subtitle={`Policy No: ${ins.policyNumber}`}
+                action={
+                  <button
+                    onClick={() => setDeleteId(ins.id)}
+                    className="btn-cockpit-danger !p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete policy"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                }
               >
-                <div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
-                      <Shield className="w-5 h-5" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        label={isExpired ? 'Expired' : isExpiringSoon ? `${daysLeft}d Left` : 'Active'}
-                        variant={isExpired ? 'red' : isExpiringSoon ? 'amber' : 'green'}
-                        dot
-                      />
-                      <button
-                        onClick={() => setDeleteId(ins.id)}
-                        className="btn-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1"
-                        title="Delete policy"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                {vehicle && (
+                  <div className="mb-4 p-2.5 rounded-lg bg-cockpit-surface-2/60 border border-cockpit-border flex items-center justify-between">
+                    <span className="text-xs font-bold text-cockpit-text">{vehicle.make} {vehicle.model}</span>
+                    <RegistrationPlate registrationNumber={vehicle.registrationNumber} size="sm" />
                   </div>
+                )}
 
-                  <h3 className="font-bold text-white text-base">{ins.provider}</h3>
-                  <p className="text-xs font-mono text-slate-400 mt-0.5">{ins.policyNumber}</p>
-
-                  {vehicle && (
-                    <div className="mt-3 p-2.5 rounded-xl bg-white/4 border border-white/6 flex items-center justify-between">
-                      <span className="text-xs text-slate-300 font-medium">
-                        {vehicle.make} {vehicle.model}
-                      </span>
-                      <span className="text-[11px] font-mono text-slate-400">{vehicle.registrationNumber}</span>
-                    </div>
-                  )}
-
-                  <div className="mt-4 space-y-2 text-xs">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Coverage Type:</span>
-                      <span className="text-white font-medium">
-                        {insuranceCoverageLabel[ins.coverageType]}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Premium Amount:</span>
-                      <span className="text-emerald-400 font-bold">
-                        {formatCurrency(ins.premiumAmount)}
-                      </span>
-                    </div>
+                <dl className="grid grid-cols-2 gap-3 text-xs font-mono">
+                  <div>
+                    <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Coverage Type</dt>
+                    <dd className="text-cockpit-text font-bold mt-0.5">{insuranceCoverageLabel[ins.coverageType]}</dd>
                   </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-white/8 flex items-center justify-between text-xs text-slate-400">
-                  <span>Starts: {formatDate(ins.startDate)}</span>
-                  <span className={isExpired ? 'text-red-400 font-semibold' : 'text-slate-300'}>
-                    Expires: {formatDate(ins.endDate)}
-                  </span>
-                </div>
-              </div>
+                  <div>
+                    <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Annual Premium</dt>
+                    <dd className="text-cockpit-amber font-bold mt-0.5">{formatCurrency(ins.premiumAmount)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Policy Start</dt>
+                    <dd className="text-cockpit-text font-bold mt-0.5">{formatDate(ins.startDate)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-cockpit-muted text-[10px] uppercase font-semibold">Policy Expiry</dt>
+                    <dd className={`font-bold mt-0.5 ${isExpired ? 'text-cockpit-red' : isExpiringSoon ? 'text-cockpit-amber' : 'text-cockpit-green'}`}>
+                      {formatDate(ins.endDate)}
+                    </dd>
+                  </div>
+                </dl>
+              </CockpitCard>
             );
           })}
         </div>
@@ -167,7 +151,7 @@ export default function InsurancePage() {
       <Modal open={open} onClose={() => { setOpen(false); reset(); }} title="Add Insurance Policy">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="form-group">
-            <label>Select Vehicle *</label>
+            <label>Select Vehicle Unit *</label>
             <select {...register('vehicleId', { required: true })}>
               {vehicles.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -219,12 +203,12 @@ export default function InsurancePage() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setOpen(false); reset(); }} className="btn-ghost flex-1">
+            <CockpitButton type="button" variant="secondary" onClick={() => { setOpen(false); reset(); }} className="flex-1">
               Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">
+            </CockpitButton>
+            <CockpitButton type="submit" variant="primary" loading={isSubmitting} className="flex-1">
               Save Policy
-            </button>
+            </CockpitButton>
           </div>
         </form>
       </Modal>
