@@ -140,64 +140,66 @@ export default function ServiceHistoryPage() {
         />
       ) : (
         <CockpitCard className="!p-0 overflow-hidden" title="Vehicle Maintenance Ledger" subtitle="Itemized workshop records & next targets">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Vehicle Unit</th>
-                <th>Service Type</th>
-                <th>Description</th>
-                <th>Garage / Workshop</th>
-                <th>Odometer</th>
-                <th className="text-right">Invoice Cost</th>
-                <th>Next Target Target</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => {
-                const vehicle = vehicles.find((v) => v.id === r.vehicleId);
-                return (
-                  <tr key={r.id} className="group">
-                    <td className="font-mono text-xs">{formatDate(r.date)}</td>
-                    <td>
-                      <div>
-                        <p className="font-bold text-cockpit-text text-xs">
-                          {vehicle ? `${vehicle.make} ${vehicle.model}` : '—'}
-                        </p>
-                        <span className="text-[10px] text-cockpit-muted font-mono">
-                          {vehicle?.registrationNumber || '—'}
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle Unit</th>
+                  <th>Service Type</th>
+                  <th>Description</th>
+                  <th>Garage / Workshop</th>
+                  <th>Odometer</th>
+                  <th className="text-right">Invoice Cost</th>
+                  <th>Next Target Odometer</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((r) => {
+                  const vehicle = vehicles.find((v) => v.id === r.vehicleId);
+                  return (
+                    <tr key={r.id} className="group">
+                      <td className="font-mono text-xs">{formatDate(r.date)}</td>
+                      <td>
+                        <div>
+                          <p className="font-bold text-cockpit-text text-xs">
+                            {vehicle ? `${vehicle.make} ${vehicle.model}` : '—'}
+                          </p>
+                          <span className="text-[10px] text-cockpit-muted font-mono">
+                            {vehicle?.registrationNumber || '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="px-2.5 py-1 rounded-md border border-purple-500/30 bg-purple-500/10 text-purple-300 font-mono text-xs font-semibold">
+                          {serviceTypeLabel[r.serviceType]}
                         </span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="px-2.5 py-1 rounded-md border border-purple-500/30 bg-purple-500/10 text-purple-300 font-mono text-xs">
-                        {serviceTypeLabel[r.serviceType]}
-                      </span>
-                    </td>
-                    <td className="text-cockpit-muted text-xs max-w-xs truncate">{r.description || 'Periodic Inspection'}</td>
-                    <td className="text-cockpit-text text-xs">{r.garageName || 'Authorized Service Center'}</td>
-                    <td className="font-mono font-semibold text-cockpit-text">
-                      {typeof r.odometerReading === 'number' ? `${r.odometerReading.toLocaleString()} km` : '—'}
-                    </td>
-                    <td className="text-right font-mono font-bold text-cockpit-amber">{formatCurrency(r.cost)}</td>
-                    <td className="font-mono text-xs text-cockpit-muted">
-                      {typeof r.nextServiceOdometer === 'number' && r.nextServiceOdometer > 0 ? `${r.nextServiceOdometer.toLocaleString()} km` : '—'}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => setDeleteId(r.id)}
-                        className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
-                        title="Delete service record"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="text-slate-300 text-xs max-w-xs truncate">{r.description || 'Periodic Inspection'}</td>
+                      <td className="text-slate-200 text-xs">{r.garageName || 'Authorized Service Center'}</td>
+                      <td className="font-mono font-semibold text-white">
+                        {typeof r.odometerReading === 'number' ? `${r.odometerReading.toLocaleString()} km` : '—'}
+                      </td>
+                      <td className="text-right font-mono font-bold text-amber-400">{formatCurrency(r.cost)}</td>
+                      <td className="font-mono text-xs text-slate-400">
+                        {typeof r.nextServiceOdometer === 'number' && r.nextServiceOdometer > 0 ? `${r.nextServiceOdometer.toLocaleString()} km` : '—'}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => setDeleteId(r.id)}
+                          className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
+                          title="Delete record"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </CockpitCard>
       )}
 

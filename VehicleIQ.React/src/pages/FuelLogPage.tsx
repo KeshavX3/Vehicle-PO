@@ -160,58 +160,60 @@ export default function FuelLogPage() {
         />
       ) : (
         <CockpitCard className="!p-0 overflow-hidden" title="Fuel Refuel Telemetry History" subtitle="Full-tank-to-full-tank calculation logs">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Vehicle Unit</th>
-                <th>Station</th>
-                <th>Odometer</th>
-                <th>Quantity</th>
-                <th>Price / L</th>
-                <th className="text-right">Total Cost</th>
-                <th>Calculated Mileage</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((e) => {
-                const vehicle = vehicles.find((v) => v.id === e.vehicleId);
-                return (
-                  <tr key={e.id} className="group">
-                    <td className="font-mono text-xs">{formatDate(e.date)}</td>
-                    <td>
-                      <div>
-                        <p className="font-bold text-cockpit-text text-xs">
-                          {vehicle ? `${vehicle.make} ${vehicle.model}` : '—'}
-                        </p>
-                        <span className="text-[10px] text-cockpit-muted font-mono">
-                          {vehicle?.registrationNumber || '—'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="text-cockpit-muted text-xs">{e.fuelStationName || 'BPCL Outlet'}</td>
-                    <td className="font-mono font-semibold text-cockpit-text">{e.odometerReading.toLocaleString()} km</td>
-                    <td className="font-mono font-bold text-cockpit-text">{e.quantity.toFixed(1)} L</td>
-                    <td className="font-mono text-cockpit-muted">₹{e.pricePerLiter.toFixed(2)}</td>
-                    <td className="text-right font-mono font-bold text-cockpit-amber">{formatCurrency(e.totalCost)}</td>
-                    <td className="font-mono font-bold text-emerald-400">
-                      {e.calculatedMileage && e.calculatedMileage > 0 ? `${e.calculatedMileage.toFixed(1)} km/L` : '—'}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => setDeleteId(e.id)}
-                        className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vehicle Unit</th>
+                  <th>Station</th>
+                  <th>Odometer</th>
+                  <th>Quantity</th>
+                  <th>Price / L</th>
+                  <th className="text-right">Total Cost</th>
+                  <th>Calculated Mileage</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((e) => {
+                  const vehicle = vehicles.find((v) => v.id === e.vehicleId);
+                  return (
+                    <tr key={e.id} className="group">
+                      <td className="font-mono text-xs">{formatDate(e.date)}</td>
+                      <td>
+                        <div>
+                          <p className="font-bold text-cockpit-text text-xs">
+                            {vehicle ? `${vehicle.make} ${vehicle.model}` : '—'}
+                          </p>
+                          <span className="text-[10px] text-cockpit-muted font-mono">
+                            {vehicle?.registrationNumber || '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="text-cockpit-muted text-xs">{e.fuelStationName || 'BPCL Outlet'}</td>
+                      <td className="font-mono font-semibold text-cockpit-text">{e.odometerReading.toLocaleString()} km</td>
+                      <td className="font-mono font-bold text-cockpit-text">{e.quantity.toFixed(1)} L</td>
+                      <td className="font-mono text-cockpit-muted">₹{e.pricePerLiter.toFixed(2)}</td>
+                      <td className="text-right font-mono font-bold text-amber-400">{formatCurrency(e.totalCost)}</td>
+                      <td className="font-mono font-bold text-emerald-400">
+                        {e.calculatedMileage && e.calculatedMileage > 0 ? `${e.calculatedMileage.toFixed(1)} km/L` : '—'}
+                      </td>
+                      <td>
+                        <button
+                          onClick={() => setDeleteId(e.id)}
+                          className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
+                          title="Delete entry"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </CockpitCard>
       )}
 

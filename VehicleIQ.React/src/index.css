@@ -76,6 +76,35 @@
     @apply cockpit-card;
   }
 
+  /* Enterprise Data Table System */
+  .table-container {
+    @apply w-full overflow-x-auto rounded-2xl border border-white/10 bg-cockpit-surface/90 shadow-xl;
+  }
+
+  .data-table {
+    @apply w-full text-left border-collapse border-spacing-0 text-sm;
+  }
+
+  .data-table thead {
+    @apply bg-cockpit-surface-2/90 border-b border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-400 select-none;
+  }
+
+  .data-table th {
+    @apply px-4 py-3.5 font-bold tracking-wider whitespace-nowrap text-left border-b border-white/10 text-slate-300;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-white/5 hover:bg-white/[0.04] transition-colors duration-150;
+  }
+
+  .data-table tbody tr:last-child {
+    @apply border-b-0;
+  }
+
+  .data-table td {
+    @apply px-4 py-3.5 align-middle whitespace-nowrap text-xs text-slate-200 font-sans;
+  }
+
   /* Buttons Design System */
   .btn-primary, .btn-cockpit-primary {
     @apply bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-bold px-4 py-2.5 rounded-xl

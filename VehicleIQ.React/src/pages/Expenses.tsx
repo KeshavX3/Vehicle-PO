@@ -150,44 +150,46 @@ export default function Expenses() {
         />
       ) : (
         <CockpitCard className="!p-0 overflow-hidden" title="Receipt Ledger" subtitle="Itemized vehicle expenditure">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Vehicle Unit</th>
-                <th className="text-right">Amount</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((e) => (
-                <tr key={e.id} className="group">
-                  <td className="font-mono text-xs">{formatDate(e.date)}</td>
-                  <td>
-                    <span className="px-2.5 py-1 rounded-md border border-cockpit-amber/30 bg-cockpit-amber/10 text-cockpit-amber font-mono text-xs font-semibold">
-                      {expenseCategoryLabel[e.category]}
-                    </span>
-                  </td>
-                  <td className="text-cockpit-text text-xs max-w-xs truncate">{e.description || 'General Vehicle Expense'}</td>
-                  <td className="font-mono text-xs text-cockpit-muted">
-                    {vehicles.find(v => v.id === e.vehicleId)?.registrationNumber || 'Fleet Wide'}
-                  </td>
-                  <td className="text-right font-mono font-bold text-cockpit-amber">{formatCurrency(e.amount)}</td>
-                  <td>
-                    <button
-                      onClick={() => setDeleteId(e.id)}
-                      className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
-                      title="Delete expense"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Vehicle Unit</th>
+                  <th className="text-right">Amount</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((e) => (
+                  <tr key={e.id} className="group">
+                    <td className="font-mono text-xs">{formatDate(e.date)}</td>
+                    <td>
+                      <span className="px-2.5 py-1 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-400 font-mono text-xs font-semibold">
+                        {expenseCategoryLabel[e.category]}
+                      </span>
+                    </td>
+                    <td className="text-slate-200 text-xs max-w-xs truncate">{e.description || 'General Vehicle Expense'}</td>
+                    <td className="font-mono text-xs text-slate-400">
+                      {vehicles.find(v => v.id === e.vehicleId)?.registrationNumber || 'Fleet Wide'}
+                    </td>
+                    <td className="text-right font-mono font-bold text-amber-400">{formatCurrency(e.amount)}</td>
+                    <td>
+                      <button
+                        onClick={() => setDeleteId(e.id)}
+                        className="btn-cockpit-danger opacity-0 group-hover:opacity-100 transition-opacity !px-2 !py-1 text-xs"
+                        title="Delete expense"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CockpitCard>
       )}
 
