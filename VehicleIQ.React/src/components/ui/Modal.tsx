@@ -23,22 +23,25 @@ export default function Modal({ open, onClose, title, children, size = 'md' }: P
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity" onClick={onClose} />
 
-      {/* Panel */}
-      <div className={`relative w-full ${widths[size]} glass-card border border-white/12 shadow-2xl animate-slide-up`}>
+      {/* Modal Dialog Box */}
+      <div className={`relative w-full ${widths[size]} bg-cockpit-surface/95 border border-white/15 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up`}>
+        {/* Top Shimmer Glow */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-cyan-400 to-amber-500" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/8">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10 bg-cockpit-surface-2/40">
+          <h3 className="text-lg font-extrabold text-white tracking-tight flex items-center gap-2">{title}</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/6 hover:bg-white/12 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200"
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4.5 h-4.5" />
           </button>
         </div>
         {/* Body */}
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );

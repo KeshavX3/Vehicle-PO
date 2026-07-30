@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface CockpitButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'amber' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   loading?: boolean;
@@ -18,10 +18,11 @@ export default function CockpitButton({
   ...props
 }: CockpitButtonProps) {
   const variantMap = {
-    primary: 'bg-cockpit-amber hover:bg-amber-500 text-black font-bold border border-amber-400/40 shadow-lg shadow-cockpit-amber/20',
-    secondary: 'bg-cockpit-surface-2 hover:bg-cockpit-border text-cockpit-text font-semibold border border-cockpit-border',
-    ghost: 'bg-transparent hover:bg-cockpit-surface-2 text-cockpit-muted hover:text-cockpit-text font-medium',
-    danger: 'bg-cockpit-red/10 hover:bg-cockpit-red/20 text-cockpit-red font-semibold border border-cockpit-red/30',
+    primary: 'bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold border border-blue-400/30 shadow-lg shadow-blue-500/25',
+    amber: 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-extrabold border border-amber-300/40 shadow-lg shadow-amber-500/20',
+    secondary: 'bg-cockpit-surface-2 hover:bg-cockpit-surface-3 text-white font-semibold border border-white/10 hover:border-white/20',
+    ghost: 'bg-transparent hover:bg-white/10 text-slate-300 hover:text-white font-medium',
+    danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold border border-red-500/30',
   };
 
   const sizeMap = {
@@ -33,7 +34,7 @@ export default function CockpitButton({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none ${variantMap[variant]} ${sizeMap[size]} ${className}`}
+      className={`inline-flex items-center justify-center transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed select-none ${variantMap[variant]} ${sizeMap[size]} ${className}`}
       {...props}
     >
       {loading ? (

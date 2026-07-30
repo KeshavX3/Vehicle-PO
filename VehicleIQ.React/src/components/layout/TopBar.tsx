@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Plus, Fuel, Receipt, Activity, Clock } from 'lucide-react';
+import { Bell, Plus, Fuel, Receipt, Activity, Clock, ShieldCheck } from 'lucide-react';
 import CockpitButton from '../cockpit/CockpitButton';
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/':           { title: 'Fleet Cockpit HUD',     subtitle: 'Real-time telemetry, health gauges & predictive analytics' },
+  '/copilot':    { title: 'VehicleIQ Copilot AI',  subtitle: 'Intelligent multi-turn AI fleet advisor & operational control' },
   '/analytics':  { title: 'Fleet Insights Engine', subtitle: 'Algorithmic efficiency anomaly detection & spend forecasting' },
   '/vehicles':   { title: 'Garage Telemetry',     subtitle: 'Active fleet vehicles & digital twin specifications'     },
   '/fuel':       { title: 'Fuel Consumption Log', subtitle: 'Rolling mileage (km/L) statistics & fill-up records'    },
@@ -35,23 +36,23 @@ export default function TopBar() {
   const page = pageTitles[basePath] ?? pageTitles['/'];
 
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-cockpit-border bg-cockpit-bg/80 backdrop-blur-md gap-4">
+    <header className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-white/10 bg-cockpit-bg/90 backdrop-blur-xl gap-4 relative z-10">
       <div className="animate-fade-in">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-cockpit-text tracking-tight">{page.title}</h2>
-          <span className="px-2 py-0.5 rounded bg-cockpit-surface-2 border border-cockpit-border text-[10px] font-mono text-cockpit-amber font-semibold">
-            TELEMETRY v2.0
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-lg font-extrabold text-white tracking-tight">{page.title}</h2>
+          <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 text-[10px] font-mono font-extrabold text-blue-400">
+            APEX TELEMETRY v2.5
           </span>
         </div>
-        <p className="text-xs text-cockpit-muted font-medium mt-0.5">{page.subtitle}</p>
+        <p className="text-xs text-slate-400 font-medium mt-0.5">{page.subtitle}</p>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Cockpit Clock */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cockpit-surface border border-cockpit-border text-cockpit-muted font-mono text-xs">
-          <Clock className="w-3.5 h-3.5 text-cockpit-amber" />
-          <span className="text-cockpit-text font-bold">{timeStr || '12:00:00'}</span>
-          <span className="text-[10px] text-cockpit-muted font-semibold">UTC</span>
+        {/* Cockpit Digital Clock */}
+        <div className="hidden lg:flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-cockpit-surface border border-white/10 text-slate-400 font-mono text-xs shadow-inner">
+          <Clock className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-white font-bold tracking-wider">{timeStr || '12:00:00'}</span>
+          <span className="text-[9px] text-emerald-400 font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20">LIVE</span>
         </div>
 
         {/* Quick Action Buttons */}
@@ -59,7 +60,7 @@ export default function TopBar() {
           <CockpitButton
             variant="secondary"
             size="sm"
-            icon={<Fuel className="w-3.5 h-3.5 text-cockpit-amber" />}
+            icon={<Fuel className="w-3.5 h-3.5 text-amber-400" />}
             onClick={() => navigate('/fuel')}
           >
             Log Fuel
@@ -68,7 +69,7 @@ export default function TopBar() {
           <CockpitButton
             variant="secondary"
             size="sm"
-            icon={<Receipt className="w-3.5 h-3.5 text-cockpit-green" />}
+            icon={<Receipt className="w-3.5 h-3.5 text-emerald-400" />}
             onClick={() => navigate('/expenses')}
           >
             Add Expense
@@ -79,12 +80,12 @@ export default function TopBar() {
         <div className="relative">
           <button
             onClick={() => navigate('/reminders')}
-            className="w-9 h-9 rounded-xl bg-cockpit-surface hover:bg-cockpit-surface-2 border border-cockpit-border flex items-center justify-center text-cockpit-muted hover:text-cockpit-text transition-all"
+            className="w-9.5 h-9.5 rounded-xl bg-cockpit-surface hover:bg-cockpit-surface-2 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md"
             title="View Reminders"
           >
-            <Bell className="w-4 h-4 text-cockpit-amber" />
+            <Bell className="w-4 h-4 text-amber-400" />
           </button>
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-cockpit-amber rounded-full text-[10px] font-mono font-bold text-black flex items-center justify-center shadow-md">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full text-[9px] font-mono font-extrabold text-black flex items-center justify-center shadow-md">
             !
           </span>
         </div>

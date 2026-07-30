@@ -74,7 +74,7 @@ export default function Dashboard() {
   const pieData = Object.entries(categoryTotals).map(([cat, total]) => ({
     name: expenseCategoryLabel[Number(cat) as ExpenseCategory],
     value: total,
-    color: expenseCategoryColor[Number(cat) as ExpenseCategory] || '#F59E0B',
+    color: expenseCategoryColor[Number(cat) as ExpenseCategory] || '#3B82F6',
   })).sort((a, b) => b.value - a.value).slice(0, 5);
 
   // Spend trend (last 6 months)
@@ -101,7 +101,7 @@ export default function Dashboard() {
       subtitle: `${r.description || 'Action required'} • Due: ${formatDate(r.dueDate)}`,
       timestamp: isOverdue ? 'OVERDUE' : days === 0 ? 'TODAY' : `${days}d LEFT`,
       statusColor: isOverdue ? 'red' : days <= 7 ? 'amber' : 'green',
-      icon: isOverdue ? <ShieldAlert className="w-4 h-4 text-cockpit-red" /> : <Bell className="w-4 h-4 text-cockpit-amber" />,
+      icon: isOverdue ? <ShieldAlert className="w-4 h-4 text-red-400" /> : <Bell className="w-4 h-4 text-amber-400" />,
     };
   });
 
@@ -119,7 +119,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Telemetry Alert Banner if pending urgent reminders */}
       {pendingReminders.length > 0 && (
         <InsightBanner
@@ -147,7 +147,7 @@ export default function Dashboard() {
           label="Current Month Spend"
           value={formatCurrency(monthlyExpenses)}
           icon={<Receipt className="w-5 h-5" />}
-          accentColor="blue"
+          accentColor="azure"
         />
         <MetricTile
           label="Total All-Time Spend"
@@ -171,12 +171,12 @@ export default function Dashboard() {
         <VehicleHero vehicle={featuredVehicle} healthScore={featuredHealth} />
       ) : (
         <CockpitCard
-          accent="amber"
-          title="Welcome to VehicleIQ Cockpit"
+          accent="azure"
+          title="Welcome to VehicleIQ Telemetry Cockpit"
           subtitle="No vehicles registered yet in your telemetry garage."
         >
           <div className="py-6 text-center">
-            <p className="text-sm text-cockpit-muted mb-4">Add your first vehicle to start tracking fuel logs, expenses, and predictive maintenance dates.</p>
+            <p className="text-sm text-slate-300 mb-4">Add your first vehicle to start tracking fuel logs, expenses, and predictive maintenance dates.</p>
             <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/vehicles')}>
               Add Vehicle to Garage
             </CockpitButton>
@@ -191,28 +191,28 @@ export default function Dashboard() {
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorAmber" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                <linearGradient id="colorAzure" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2E" />
-              <XAxis dataKey="month" tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#71717A', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => `₹${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1C1C1F',
-                  border: '1px solid #2A2A2E',
+                  backgroundColor: '#161F33',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 12,
-                  color: '#F4F4F5',
+                  color: '#F8FAFC',
                   fontFamily: 'JetBrains Mono',
                   padding: '10px 14px',
                 }}
-                cursor={{ stroke: 'rgba(245, 158, 11, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
+                cursor={{ stroke: 'rgba(59, 130, 246, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                 formatter={(v: unknown) => [formatCurrency(v as number), 'Spend']}
               />
-              <Area type="monotone" dataKey="amount" stroke="#F59E0B" strokeWidth={2.5} fill="url(#colorAmber)" />
+              <Area type="monotone" dataKey="amount" stroke="#3B82F6" strokeWidth={3} fill="url(#colorAzure)" />
             </AreaChart>
           </ResponsiveContainer>
         </CockpitCard>
@@ -222,20 +222,20 @@ export default function Dashboard() {
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
+                <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
                   {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} stroke="#1C1C1F" strokeWidth={2} />
+                    <Cell key={i} fill={entry.color} stroke="#161F33" strokeWidth={3} />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ background: '#1C1C1F', border: '1px solid #2A2A2E', borderRadius: 12, color: '#F4F4F5', fontFamily: 'JetBrains Mono' }}
+                  contentStyle={{ background: '#161F33', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: '#F8FAFC', fontFamily: 'JetBrains Mono' }}
                   formatter={(v: unknown) => [formatCurrency(v as number)]}
                 />
-                <Legend formatter={(v) => <span className="text-cockpit-muted text-xs font-mono">{v}</span>} />
+                <Legend formatter={(v) => <span className="text-slate-300 text-xs font-mono">{v}</span>} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="py-12 text-center text-cockpit-muted font-mono text-xs">
+            <div className="py-12 text-center text-slate-400 font-mono text-xs">
               No expense transactions logged.
             </div>
           )}
@@ -248,7 +248,7 @@ export default function Dashboard() {
           title="Telemetry Activity Feed"
           subtitle="Upcoming tasks & due notifications"
           action={
-            <Link to="/reminders" className="text-xs text-cockpit-amber hover:underline flex items-center gap-1 font-mono font-semibold">
+            <Link to="/reminders" className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-mono font-semibold">
               View All <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           }
@@ -261,7 +261,7 @@ export default function Dashboard() {
           title="Garage Vehicles Overview"
           subtitle="Registered telemetry units"
           action={
-            <Link to="/vehicles" className="text-xs text-cockpit-amber hover:underline flex items-center gap-1 font-mono font-semibold">
+            <Link to="/vehicles" className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-mono font-semibold">
               Garage Grid <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           }
@@ -271,22 +271,22 @@ export default function Dashboard() {
               <Link
                 key={v.id}
                 to={`/vehicles/${v.id}`}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-cockpit-surface-2/60 hover:bg-cockpit-surface-2 border border-cockpit-border/50 hover:border-cockpit-amber/30 transition-all group"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-cockpit-surface-2/60 hover:bg-cockpit-surface-2 border border-white/10 hover:border-blue-500/40 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cockpit-amber/10 border border-cockpit-amber/20 flex items-center justify-center text-cockpit-amber group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
                     <Car className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-cockpit-text group-hover:text-cockpit-amber transition-colors">
+                    <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
                       {v.make} {v.model} ({v.year})
                     </h4>
-                    <p className="text-xs font-mono text-cockpit-muted mt-0.5">
+                    <p className="text-xs font-mono text-slate-400 mt-0.5">
                       {v.registrationNumber} • {v.currentOdometer.toLocaleString()} km
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-cockpit-muted group-hover:text-cockpit-amber transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
               </Link>
             ))}
 
