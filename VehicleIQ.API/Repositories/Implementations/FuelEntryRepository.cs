@@ -14,6 +14,7 @@ public class FuelEntryRepository : GenericRepository<FuelEntry>, IFuelEntryRepos
     public async Task<IReadOnlyList<FuelEntry>> GetByVehicleIdAsync(int vehicleId)
     {
         return await _context.FuelEntries
+            .AsNoTracking()
             .Where(f => f.VehicleId == vehicleId)
             .OrderByDescending(f => f.Date)
             .ThenByDescending(f => f.OdometerReading)
@@ -23,6 +24,7 @@ public class FuelEntryRepository : GenericRepository<FuelEntry>, IFuelEntryRepos
     public async Task<IReadOnlyList<FuelEntry>> GetByUserIdAsync(int userId)
     {
         return await _context.FuelEntries
+            .AsNoTracking()
             .Include(f => f.Vehicle)
             .Where(f => f.Vehicle.UserId == userId)
             .OrderByDescending(f => f.Date)
@@ -33,6 +35,7 @@ public class FuelEntryRepository : GenericRepository<FuelEntry>, IFuelEntryRepos
     public async Task<FuelEntry?> GetPreviousFullFuelEntryAsync(int vehicleId, decimal currentOdometer)
     {
         return await _context.FuelEntries
+            .AsNoTracking()
             .Where(f => f.VehicleId == vehicleId && f.IsFullTank && f.OdometerReading < currentOdometer)
             .OrderByDescending(f => f.OdometerReading)
             .FirstOrDefaultAsync();

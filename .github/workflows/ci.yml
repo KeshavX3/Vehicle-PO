@@ -20,11 +20,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore Dependencies
-        run: dotnet restore VehicleIQ.API/VehicleIQ.API.csproj
+      - name: Build Solution
+        run: dotnet build VehicleIQ.slnx -c Release
 
-      - name: Build API
-        run: dotnet build VehicleIQ.API/VehicleIQ.API.csproj --no-restore -c Release
+      - name: Run Backend Unit Tests
+        run: dotnet test VehicleIQ.Tests/VehicleIQ.Tests.csproj --no-build -c Release --logger "trx;LogFileName=test-results.trx"
 
   frontend:
     name: Build & Lint Frontend (React)

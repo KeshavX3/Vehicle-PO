@@ -54,6 +54,9 @@ builder.Services.AddScoped<IPucCertificateService, PucCertificateService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
+// ─── Caching ───
+builder.Services.AddMemoryCache();
+
 // ─── FluentValidation ───
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 

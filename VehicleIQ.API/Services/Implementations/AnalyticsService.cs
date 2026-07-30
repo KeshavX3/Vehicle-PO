@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using VehicleIQ.API.DTOs.Analytics;
 using VehicleIQ.API.Exceptions;
 using VehicleIQ.API.Models.Entities;
@@ -12,17 +13,20 @@ public class AnalyticsService : IAnalyticsService
     private readonly IFuelEntryRepository _fuelEntryRepository;
     private readonly IExpenseRepository _expenseRepository;
     private readonly IServiceRecordRepository _serviceRecordRepository;
+    private readonly IMemoryCache _cache;
 
     public AnalyticsService(
         IVehicleRepository vehicleRepository,
         IFuelEntryRepository fuelEntryRepository,
         IExpenseRepository expenseRepository,
-        IServiceRecordRepository serviceRecordRepository)
+        IServiceRecordRepository serviceRecordRepository,
+        IMemoryCache cache)
     {
         _vehicleRepository = vehicleRepository;
         _fuelEntryRepository = fuelEntryRepository;
         _expenseRepository = expenseRepository;
         _serviceRecordRepository = serviceRecordRepository;
+        _cache = cache;
     }
 
     public async Task<VehicleAnalyticsDto> GetVehicleAnalyticsAsync(int vehicleId, int userId)
@@ -42,6 +46,12 @@ public class AnalyticsService : IAnalyticsService
 
     public async Task<FleetSummaryAnalyticsDto> GetFleetSummaryAnalyticsAsync(int userId)
     {
+        var cacheKey = $"fleet_summary_{userId}";
+        if (_cache.TryGetValue(cacheKey, out FleetSummaryAnalyticsDto? cachedResult) && cachedResult != null)
+        {
+            return cachedResult;
+        }
+
         // Batch fetch all data in 4 fast queries upfront — eliminates N+1 query problem
         var vehicles = await _vehicleRepository.GetByUserIdAsync(userId);
         var allExpenses = await _expenseRepository.GetByUserIdAsync(userId);
@@ -97,7 +107,7 @@ public class AnalyticsService : IAnalyticsService
             recommendations.Add("✅ All fleet health metrics, fuel efficiency, and service schedules are operating at optimal levels.");
         }
 
-        return new FleetSummaryAnalyticsDto(
+        var result = new FleetSummaryAnalyticsDto(
             totalVehicles,
             Math.Round(totalFleetSpend, 2),
             Math.Round(avgFleetCpk, 2),
@@ -109,6 +119,9 @@ public class AnalyticsService : IAnalyticsService
             vehicleSummaries,
             recommendations
         );
+
+        _cache.Set(cacheKey, result, TimeSpan.FromMinutes(2));
+        return result;
     }
 
     private static VehicleAnalyticsDto ComputeVehicleAnalytics(

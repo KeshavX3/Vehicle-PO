@@ -14,6 +14,7 @@ public class VehicleRepository : GenericRepository<Vehicle>, IVehicleRepository
     public async Task<IReadOnlyList<Vehicle>> GetByUserIdAsync(int userId)
     {
         return await _context.Vehicles
+            .AsNoTracking()
             .Where(v => v.UserId == userId)
             .ToListAsync();
     }

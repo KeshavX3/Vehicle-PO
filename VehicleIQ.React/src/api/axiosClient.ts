@@ -8,6 +8,23 @@ const axiosClient = axios.create({
   },
 });
 
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Request Interceptor: Attach JWT Bearer Token
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('vehicleiq_token');
@@ -17,17 +34,68 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response Interceptor: Toast on errors & handle 401
+// Response Interceptor: Silent Token Refresh & Toast Handling
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('vehicleiq_token');
-      localStorage.removeItem('vehicleiq_user');
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem('vehicleiq_refresh_token');
+
+      if (refreshToken && !originalRequest.url?.includes('/auth/refresh')) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axiosClient(originalRequest);
+            })
+            .catch((err) => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const res = await axios.post('/api/auth/refresh', { refreshToken });
+          const newAccessToken = res.data.accessToken;
+          const newRefreshToken = res.data.refreshToken;
+
+          localStorage.setItem('vehicleiq_token', newAccessToken);
+          if (newRefreshToken) {
+            localStorage.setItem('vehicleiq_refresh_token', newRefreshToken);
+          }
+
+          axiosClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          processQueue(null, newAccessToken);
+          return axiosClient(originalRequest);
+        } catch (refreshErr) {
+          processQueue(refreshErr, null);
+          localStorage.removeItem('vehicleiq_token');
+          localStorage.removeItem('vehicleiq_refresh_token');
+          localStorage.removeItem('vehicleiq_user');
+
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+          }
+          return Promise.reject(refreshErr);
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        localStorage.removeItem('vehicleiq_token');
+        localStorage.removeItem('vehicleiq_refresh_token');
+        localStorage.removeItem('vehicleiq_user');
+
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
+        }
       }
-    } else {
+    } else if (error.response?.status !== 401) {
       const message =
         error.response?.data?.message ||
         error.response?.data?.title ||

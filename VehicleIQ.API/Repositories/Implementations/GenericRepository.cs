@@ -20,7 +20,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
 
     public virtual async Task<IReadOnlyList<T>> ListAllAsync()
     {
-        return await _context.Set<T>().ToListAsync();
+        return await _context.Set<T>().AsNoTracking().ToListAsync();
     }
 
     public virtual async Task<T> AddAsync(T entity)

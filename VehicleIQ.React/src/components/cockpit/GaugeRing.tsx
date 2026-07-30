@@ -44,7 +44,14 @@ export default function GaugeRing({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center p-2">
+    <div
+      className="flex flex-col items-center justify-center text-center p-2"
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-label={label || subtext || 'Gauge measurement'}
+    >
       <div className="relative flex items-center justify-center" style={{ width: config.width, height: config.width }}>
         <svg width={config.width} height={config.width} className="transform -rotate-90">
           {/* Background Ring */}

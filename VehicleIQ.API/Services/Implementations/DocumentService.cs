@@ -68,6 +68,19 @@ public class DocumentService : IDocumentService
             throw new BadRequestException("Uploaded file is empty.");
         }
 
+        const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10MB limit
+        if (file.Length > MaxFileSizeBytes)
+        {
+            throw new BadRequestException("File size exceeds maximum allowed limit of 10MB.");
+        }
+
+        var allowedExtensions = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+        {
+            throw new BadRequestException($"File type '{extension}' is not permitted. Allowed extensions: {string.Join(", ", allowedExtensions)}.");
+        }
+
         // 2. Ensure uploads directory exists
         var uploadsDirectory = Path.Combine(_env.ContentRootPath, UploadsFolderName);
         if (!Directory.Exists(uploadsDirectory))
