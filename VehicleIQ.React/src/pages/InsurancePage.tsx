@@ -38,17 +38,40 @@ export default function InsurancePage() {
 
   useEffect(() => { loadData(); }, []);
 
-  const onSubmit = async (data: CreateInsuranceRequest) => {
-    await insuranceApi.create({
-      ...data,
-      vehicleId: Number(data.vehicleId),
-      premiumAmount: Number(data.premiumAmount),
-      coverageType: Number(data.coverageType),
+  const handleOpenModal = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    reset({
+      vehicleId: vehicles.length > 0 ? vehicles[0].id : (undefined as any),
+      coverageType: InsuranceCoverageType.ThirdParty,
+      provider: '',
+      policyNumber: '',
+      premiumAmount: undefined as any,
+      startDate: today,
+      endDate: nextYear,
     });
-    toast.success('Insurance policy saved!');
-    reset();
-    setOpen(false);
-    loadData();
+    setOpen(true);
+  };
+
+  const onSubmit = async (data: CreateInsuranceRequest) => {
+    try {
+      const vehicleId = Number(data.vehicleId) || (vehicles.length > 0 ? vehicles[0].id : 0);
+      const coverageType = Number(data.coverageType) ?? 0;
+
+      await insuranceApi.create({
+        ...data,
+        vehicleId,
+        coverageType,
+        premiumAmount: Number(data.premiumAmount),
+      });
+      toast.success('Insurance policy saved!');
+      reset();
+      setOpen(false);
+      loadData();
+    } catch (err: any) {
+      // Detailed validation toast handled by axiosClient interceptor
+    }
   };
 
   const confirmDelete = async () => {
@@ -74,7 +97,7 @@ export default function InsurancePage() {
           <p className="text-xs font-mono text-cockpit-muted mt-0.5">{insurances.length} active policies registered</p>
         </div>
 
-        <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
+        <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={handleOpenModal}>
           Add Insurance Policy
         </CockpitButton>
       </div>
@@ -85,7 +108,7 @@ export default function InsurancePage() {
           title="No insurance policies on record"
           description="Keep track of your vehicle insurance policies, coverage types, and renewal due dates."
           action={
-            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => setOpen(true)}>
+            <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={handleOpenModal}>
               Add First Policy
             </CockpitButton>
           }
@@ -187,7 +210,7 @@ export default function InsurancePage() {
             </div>
             <div className="form-group">
               <label>Premium Amount (₹) *</label>
-              <input type="number" step="0.01" {...register('premiumAmount', { required: true })} />
+              <input type="number" step="0.01" {...register('premiumAmount', { required: true })} placeholder="5000" />
             </div>
           </div>
 

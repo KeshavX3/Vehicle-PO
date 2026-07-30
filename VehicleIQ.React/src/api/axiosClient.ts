@@ -96,11 +96,16 @@ axiosClient.interceptors.response.use(
         }
       }
     } else if (error.response?.status !== 401) {
-      const message =
-        error.response?.data?.message ||
-        error.response?.data?.title ||
-        error.message ||
-        'Something went wrong';
+      let message = error.response?.data?.message;
+      if (!message && error.response?.data?.errors) {
+        const errorEntries = Object.entries(error.response.data.errors);
+        if (errorEntries.length > 0 && Array.isArray(errorEntries[0][1]) && errorEntries[0][1].length > 0) {
+          message = (errorEntries[0][1] as string[])[0];
+        }
+      }
+      if (!message) {
+        message = error.response?.data?.title || error.message || 'Something went wrong';
+      }
       toast.error(message);
     }
     return Promise.reject(error);
