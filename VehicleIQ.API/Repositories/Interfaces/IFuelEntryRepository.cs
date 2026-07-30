@@ -7,4 +7,5 @@ public interface IFuelEntryRepository : IGenericRepository<FuelEntry>
     Task<IReadOnlyList<FuelEntry>> GetByVehicleIdAsync(int vehicleId);
     Task<IReadOnlyList<FuelEntry>> GetByUserIdAsync(int userId);
     Task<FuelEntry?> GetPreviousFullFuelEntryAsync(int vehicleId, decimal currentOdometer);
+    Task UpdateCalculatedMileageAsync(int id, decimal? calculatedMileage);
 }

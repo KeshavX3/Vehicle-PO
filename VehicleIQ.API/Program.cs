@@ -54,6 +54,16 @@ builder.Services.AddScoped<IPucCertificateService, PucCertificateService>();
 builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 
+// ─── AI Copilot Services ───
+builder.Services.AddScoped<ICopilotService, CopilotService>();
+builder.Services.AddScoped<CopilotFunctionDispatcher>();
+builder.Services.AddScoped<HealthScoreCalculator>();
+builder.Services.AddSingleton<PromptBuilder>();
+builder.Services.AddHttpClient("GeminiClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
+
 // ─── Caching ───
 builder.Services.AddMemoryCache();
 

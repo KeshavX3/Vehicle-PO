@@ -24,6 +24,8 @@ x64/
 x86/
 build/
 bld/
+publish/
+**/publish/
 
 # NuGet
 *.nupkg

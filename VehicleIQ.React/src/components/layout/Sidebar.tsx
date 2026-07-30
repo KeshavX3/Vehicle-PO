@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Sparkles, Car, Fuel, Wrench, Receipt,
-  Shield, FileCheck, Bell, FileText, ChevronRight, LogOut, Gauge, Menu, X
+  Shield, FileCheck, Bell, FileText, ChevronRight, LogOut, Gauge, Menu, X, Bot
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import StatusDot from '../cockpit/StatusDot';
 
 const navItems = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard Cockpit' },
+  { to: '/copilot',     icon: Bot,             label: 'VehicleIQ Copilot', isAi: true },
   { to: '/analytics',   icon: Sparkles,        label: 'Fleet Insights'    },
   { to: '/vehicles',    icon: Car,             label: 'Garage Vehicles'  },
   { to: '/fuel',        icon: Fuel,            label: 'Fuel Telemetry'   },
@@ -61,7 +62,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, icon: Icon, label }) => {
+        {navItems.map(({ to, icon: Icon, label, isAi }) => {
           const isActive = to === '/'
             ? location.pathname === '/'
             : location.pathname.startsWith(to);
@@ -73,15 +74,20 @@ export default function Sidebar() {
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group relative ${
                 isActive
                   ? 'bg-cockpit-amber/10 text-cockpit-amber border border-cockpit-amber/30 shadow-md shadow-cockpit-amber/5 font-bold'
+                  : isAi
+                  ? 'text-cockpit-amber/90 hover:text-cockpit-amber hover:bg-cockpit-amber/10 border border-cockpit-amber/20'
                   : 'text-cockpit-muted hover:text-cockpit-text hover:bg-cockpit-surface-2'
               }`}
             >
               {isActive && (
                 <div className="absolute left-0 top-2 bottom-2 w-1 bg-cockpit-amber rounded-r" />
               )}
-              <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? 'text-cockpit-amber' : 'text-cockpit-muted group-hover:text-cockpit-text'}`} />
+              <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive || isAi ? 'text-cockpit-amber' : 'text-cockpit-muted group-hover:text-cockpit-text'}`} />
               <span className="flex-1 tracking-wide">{label}</span>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-cockpit-amber" />}
+              {isAi && (
+                <span className="px-1.5 py-0.5 rounded bg-cockpit-amber/20 text-cockpit-amber border border-cockpit-amber/30 text-[9px] font-mono font-extrabold">AI</span>
+              )}
+              {isActive && !isAi && <ChevronRight className="w-3.5 h-3.5 text-cockpit-amber" />}
             </NavLink>
           );
         })}

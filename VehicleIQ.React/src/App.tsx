@@ -16,6 +16,7 @@ import PucPage from './pages/PucPage';
 import Expenses from './pages/Expenses';
 import Reminders from './pages/Reminders';
 import Documents from './pages/Documents';
+import CopilotWorkspace from './pages/CopilotWorkspace';
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/copilot" element={<CopilotWorkspace />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/vehicles" element={<Vehicles />} />
               <Route path="/vehicles/:id" element={<VehicleDetail />} />

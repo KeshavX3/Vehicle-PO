@@ -263,3 +263,22 @@ export interface UpdateReminderStatusRequest {
   status: ReminderStatus;
   snoozedUntil?: string;
 }
+
+// ─── AI Copilot Types ────────────────────────────────────
+export interface CopilotMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+export interface CopilotChatRequest {
+  message: string;
+  pageContext?: string;
+  conversationHistory?: CopilotMessage[];
+}
+
+export interface CopilotResponse {
+  message: string;
+  functionCalled?: string;
+  structuredData?: unknown;
+}

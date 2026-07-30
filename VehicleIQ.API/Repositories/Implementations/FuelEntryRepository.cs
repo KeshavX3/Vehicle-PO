@@ -40,4 +40,11 @@ public class FuelEntryRepository : GenericRepository<FuelEntry>, IFuelEntryRepos
             .OrderByDescending(f => f.OdometerReading)
             .FirstOrDefaultAsync();
     }
+
+    public async Task UpdateCalculatedMileageAsync(int id, decimal? calculatedMileage)
+    {
+        await _context.FuelEntries
+            .Where(f => f.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(f => f.CalculatedMileage, calculatedMileage));
+    }
 }

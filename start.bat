@@ -6,7 +6,7 @@ echo ===================================================
 
 echo.
 echo [1/3] Launching ASP.NET Core API Backend (http://localhost:5109)...
-start "VehicleIQ Backend API" cmd /k "cd /d "%~dp0VehicleIQ.API" && dotnet bin\Debug\net10.0\VehicleIQ.API.dll"
+start "VehicleIQ Backend API" cmd /k "cd /d "%~dp0VehicleIQ.API" && dotnet publish\VehicleIQ.API.dll"
 
 echo.
 echo [2/3] Launching React Vite Cockpit UI (http://localhost:5173)...
