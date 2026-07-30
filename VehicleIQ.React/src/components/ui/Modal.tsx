@@ -26,7 +26,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }: P
       <div className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity" onClick={onClose} />
 
       {/* Modal Dialog Box */}
-      <div className={`relative w-full ${widths[size]} bg-cockpit-surface/95 border border-white/15 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up`}>
+      <div className={`relative w-full ${widths[size]} max-h-[90vh] overflow-y-auto bg-cockpit-surface/95 border border-white/15 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] animate-slide-up`}>
         {/* Top Shimmer Glow */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-cyan-400 to-amber-500" />
 

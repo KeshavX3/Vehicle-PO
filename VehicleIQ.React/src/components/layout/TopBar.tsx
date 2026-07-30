@@ -36,7 +36,7 @@ export default function TopBar() {
   const page = pageTitles[basePath] ?? pageTitles['/'];
 
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between px-6 py-4 border-b border-white/10 bg-cockpit-bg/90 backdrop-blur-xl gap-4 relative z-10">
+    <header className="flex flex-col md:flex-row md:items-center justify-between pl-14 pr-4 md:px-6 py-3.5 md:py-4 border-b border-white/10 bg-cockpit-bg/90 backdrop-blur-xl gap-3.5 relative z-10">
       <div className="animate-fade-in">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-extrabold text-white tracking-tight">{page.title}</h2>
