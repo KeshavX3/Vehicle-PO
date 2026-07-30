@@ -57,7 +57,11 @@ export default function Dashboard() {
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     })
     .reduce((sum, e) => sum + e.amount, 0);
+
   const pendingReminders = reminders.filter(r => r.status === ReminderStatus.Pending);
+  // Urgent reminders threshold: Overdue or due within 7 days
+  const urgentReminders = pendingReminders.filter(r => daysUntil(r.dueDate) <= 7);
+
   const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   // Featured Vehicle
@@ -91,19 +95,22 @@ export default function Dashboard() {
     };
   });
 
-  // Timeline feed conversion
-  const timelineItems: TimelineItem[] = pendingReminders.slice(0, 4).map(r => {
-    const days = daysUntil(r.dueDate);
-    const isOverdue = days < 0;
-    return {
-      id: r.id,
-      title: r.title,
-      subtitle: `${r.description || 'Action required'} • Due: ${formatDate(r.dueDate)}`,
-      timestamp: isOverdue ? 'OVERDUE' : days === 0 ? 'TODAY' : `${days}d LEFT`,
-      statusColor: isOverdue ? 'red' : days <= 7 ? 'amber' : 'green',
-      icon: isOverdue ? <ShieldAlert className="w-4 h-4 text-red-400" /> : <Bell className="w-4 h-4 text-amber-400" />,
-    };
-  });
+  // Timeline feed conversion: Closest due dates first
+  const timelineItems: TimelineItem[] = [...pendingReminders]
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 4)
+    .map(r => {
+      const days = daysUntil(r.dueDate);
+      const isOverdue = days < 0;
+      return {
+        id: r.id,
+        title: r.title,
+        subtitle: `${r.description || 'Action required'} • Due: ${formatDate(r.dueDate)}`,
+        timestamp: isOverdue ? 'OVERDUE' : days === 0 ? 'TODAY' : `${days}d LEFT`,
+        statusColor: isOverdue ? 'red' : days <= 7 ? 'amber' : 'green',
+        icon: isOverdue ? <ShieldAlert className="w-4 h-4 text-red-400" /> : <Bell className="w-4 h-4 text-amber-400" />,
+      };
+    });
 
   if (loading) {
     return (
@@ -120,12 +127,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Telemetry Alert Banner if pending urgent reminders */}
-      {pendingReminders.length > 0 && (
+      {/* Telemetry Alert Banner ONLY if there are urgent reminders due within 7 days or overdue */}
+      {urgentReminders.length > 0 && (
         <InsightBanner
           type="warning"
-          title="Fleet Health Action Required"
-          message={`You have ${pendingReminders.length} pending reminder task(s) awaiting completion.`}
+          title="Urgent Fleet Action Required"
+          message={`You have ${urgentReminders.length} urgent task(s) due within 7 days or overdue.`}
           action={
             <CockpitButton size="sm" variant="secondary" onClick={() => navigate('/reminders')}>
               Review Tasks
@@ -160,9 +167,9 @@ export default function Dashboard() {
           value={pendingReminders.length}
           unit="tasks"
           icon={<Bell className="w-5 h-5" />}
-          accentColor={pendingReminders.length > 0 ? 'red' : 'green'}
-          trend={pendingReminders.length > 0 ? `${pendingReminders.length} Urgent` : 'Optimal'}
-          trendUp={pendingReminders.length === 0}
+          accentColor={urgentReminders.length > 0 ? 'red' : 'green'}
+          trend={urgentReminders.length > 0 ? `${urgentReminders.length} Urgent` : 'Optimal'}
+          trendUp={urgentReminders.length === 0}
         />
       </div>
 

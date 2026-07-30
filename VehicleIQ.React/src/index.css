@@ -16,7 +16,7 @@
   body {
     @apply bg-cockpit-bg text-cockpit-text font-sans antialiased selection:bg-blue-500/30 selection:text-blue-400;
     background-image: 
-      radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.07) 0%, transparent 65%),
+      radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 65%),
       radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.04) 0%, transparent 55%),
       radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px);
     background-size: 100% 100%, 100% 100%, 28px 28px;
@@ -43,7 +43,7 @@
   input, select, textarea {
     @apply bg-cockpit-surface-2/90 border border-white/10 text-cockpit-text rounded-xl px-4 py-2.5 text-sm
       focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/80
-      placeholder:text-cockpit-muted transition-all duration-200 shadow-inner;
+      placeholder:text-cockpit-muted transition-all duration-200;
   }
 
   input[type="date"], input[type="number"] {
@@ -58,11 +58,17 @@
 @layer components {
   /* Apex Telemetry Obsidian Card */
   .cockpit-card {
-    @apply bg-cockpit-surface/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-cockpit-card relative overflow-hidden transition-all duration-300;
+    @apply bg-cockpit-surface/90 backdrop-blur-md border border-white/10 rounded-2xl relative overflow-hidden transition-all duration-300;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   }
 
   .cockpit-card-hover {
-    @apply cockpit-card hover:border-blue-500/40 hover:shadow-cockpit-glow hover:-translate-y-1;
+    @apply cockpit-card transition-all duration-300;
+  }
+  .cockpit-card-hover:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25), 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   }
 
   /* Backwards safety mapping */
@@ -72,26 +78,38 @@
 
   /* Buttons Design System */
   .btn-primary, .btn-cockpit-primary {
-    @apply bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold px-4 py-2.5 rounded-xl
+    @apply bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-bold px-4 py-2.5 rounded-xl
       transition-all duration-200 shadow-lg shadow-blue-500/25 active:scale-[0.98]
       disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm tracking-wide;
   }
+  .btn-primary:hover, .btn-cockpit-primary:hover {
+    @apply bg-gradient-to-r from-blue-500 to-cyan-400;
+  }
 
   .btn-amber, .btn-cockpit-amber {
-    @apply bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-extrabold px-4 py-2.5 rounded-xl
+    @apply bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-extrabold px-4 py-2.5 rounded-xl
       transition-all duration-200 shadow-lg shadow-amber-500/20 active:scale-[0.98]
       disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm tracking-wide;
   }
+  .btn-amber:hover, .btn-cockpit-amber:hover {
+    @apply bg-gradient-to-r from-amber-400 to-yellow-400;
+  }
 
   .btn-ghost, .btn-cockpit-secondary {
-    @apply bg-cockpit-surface-2/80 hover:bg-cockpit-surface-3 text-cockpit-text font-semibold px-4 py-2.5 rounded-xl
-      border border-white/10 hover:border-white/20 transition-all duration-200 active:scale-[0.98]
+    @apply bg-cockpit-surface-2/80 text-cockpit-text font-semibold px-4 py-2.5 rounded-xl
+      border border-white/10 transition-all duration-200 active:scale-[0.98]
       flex items-center justify-center gap-2 text-sm;
+  }
+  .btn-ghost:hover, .btn-cockpit-secondary:hover {
+    @apply bg-cockpit-surface-2 border-white/20;
   }
 
   .btn-danger, .btn-cockpit-danger {
-    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold px-4 py-2 rounded-xl
+    @apply bg-red-500/10 text-red-400 font-semibold px-4 py-2 rounded-xl
       border border-red-500/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
+  }
+  .btn-danger:hover, .btn-cockpit-danger:hover {
+    @apply bg-red-500/20;
   }
 
   .form-group {
