@@ -39,7 +39,7 @@ export default function Reminders() {
     try {
       setLoading(true);
       const [rData, vData] = await Promise.all([
-        remindersApi.getAll(false),
+        remindersApi.getAll(),
         vehiclesApi.getAll(),
       ]);
       setReminders(rData);

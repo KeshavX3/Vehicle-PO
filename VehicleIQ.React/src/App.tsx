@@ -20,10 +20,12 @@ import Documents from './pages/Documents';
 import CopilotWorkspace from './pages/CopilotWorkspace';
 
 export default function App() {
+  const basename = import.meta.env.MODE === 'production' ? '/Vehicle-PO' : '';
+
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={basename}>
           <Toaster
             position="top-right"
             toastOptions={{
