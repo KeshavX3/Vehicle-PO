@@ -95,7 +95,7 @@ axiosClient.interceptors.response.use(
           window.location.href = '/login';
         }
       }
-    } else if (error.response?.status !== 401) {
+    } else if (error.response?.status !== 401 && error.response?.status !== 405 && error.response?.status !== 404) {
       let message = error.response?.data?.message;
       if (!message && error.response?.data?.errors) {
         const errorEntries = Object.entries(error.response.data.errors);
