@@ -1,26 +1,26 @@
 <div align="center">
 
-# 🏎️ VehicleIQ
-### *Digital Twin Automotive Cockpit & Fleet Intelligence Platform*
+# 🏎️ VehicleIQ Pro
+### *Digital Twin Automotive Cockpit & 3D Fleet Intelligence Platform*
 
-[![Build Status](https://img.shields.io/badge/Build-Passing-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-https%3A%2F%2Fkeshavx3.github.io%2FVehicle--PO%2F-2563EB?style=for-the-badge&logo=githubpages&logoColor=white)](https://keshavx3.github.io/Vehicle-PO/)
+[![Build Status](https://img.shields.io/badge/Build-Passing-10b981?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/KeshavX3/Vehicle-PO/actions)
+[![3D Three.js](https://img.shields.io/badge/3D-Three.js_WebGL-000000?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![.NET](https://img.shields.io/badge/.NET_Core-10.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![SQL Server](https://img.shields.io/badge/SQL_Server-2022-CC292B?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
-[![JWT](https://img.shields.io/badge/Auth-JWT_Bearer_%2B_Refresh-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
+> 🚀 **Explore the Live App**: **[https://keshavx3.github.io/Vehicle-PO/](https://keshavx3.github.io/Vehicle-PO/)**
 
 <p align="center">
   <a href="#-overview">Overview</a> •
   <a href="#-key-features">Key Features</a> •
   <a href="#-cockpit-ui-design-system">UI Design System</a> •
   <a href="#-system-architecture">Architecture</a> •
-  <a href="#-ai--analytics-intelligence">AI Insights</a> •
-  <a href="#-getting-started">Getting Started</a> •
-  <a href="#-database-schema">Database</a>
+  <a href="#-repository-structure">Project Structure</a> •
+  <a href="#-getting-started">Getting Started</a>
 </p>
 
 ---
@@ -67,16 +67,16 @@ The frontend application uses a custom-built **Automotive Cockpit Design System*
 
 ```mermaid
 graph TD
-    User([Driver / Fleet Manager]) <-->|HTTP/HTTPS| ReactApp[React 19 + TypeScript + Vite]
+    User([Driver / Fleet Manager]) <-->|HTTP/HTTPS| ReactApp[React 19 + Three.js 3D + TypeScript + Vite]
     
-    subgraph Frontend Layer [React 19 Automotive Cockpit HUD - Port 5173]
+    subgraph Frontend Layer [React 19 Automotive Cockpit HUD]
         ReactApp -->|AuthContext| AuthState[JWT & Refresh Token Store]
         ReactApp -->|Axios Interceptor| AxiosClient[Central Axios Client]
         ReactApp -->|Cockpit Design System| CockpitUI[Tailwind CSS + Monospace Metrics]
-        ReactApp -->|Telemetry Visuals| Gauges[SVG Gauges & Recharts]
+        ReactApp -->|3D WebGL Canvas| ThreeCanvas[Three.js Interactive 3D Digital Twin]
     end
 
-    AxiosClient <-->|REST API + Bearer Token| API[ASP.NET Core 10 Web API - Port 5109]
+    AxiosClient <-->|REST API + Bearer Token| API[ASP.NET Core 10 Web API]
 
     subgraph Backend Layer [ASP.NET Core 10 Web API Layer]
         API --> Controllers[Controllers Layer]
@@ -87,7 +87,25 @@ graph TD
         Services --> Repositories[Repositories Layer]
     end
 
-    Repositories <-->|EF Core 10 + Query Filters| SQL[(SQL Server LocalDB / Docker)]
+    Repositories <-->|EF Core 10 + Query Filters| SQL[(Database Layer)]
+```
+
+---
+
+## 📂 Repository Structure
+
+```text
+Vehicle-PO/
+├── 🌐 VehicleIQ.React/      # Frontend (React 19 + TypeScript + Three.js 3D + Tailwind CSS)
+│   ├── src/components/      # 3D Canvas, Cockpit Cards, Gauges & UI System
+│   ├── src/pages/           # Telemetry Dashboard, Copilot AI, Fuel, Service, Expenses
+│   └── src/api/             # Axios API Client & Fallback Telemetry Handlers
+├── ⚙️ VehicleIQ.API/        # Backend (.NET 10 Web API + Entity Framework Core)
+│   ├── Controllers/         # REST API Endpoints & Auth Handlers
+│   ├── Services/            # Rolling Mileage Math, Analytics & Gemini Copilot
+│   └── Repositories/        # EF Core Repositories & Database Operations
+├── 🧪 VehicleIQ.Tests/      # Automated Unit Tests (xUnit & Moq)
+└── 🚀 .github/workflows/    # CI/CD Pipelines & GitHub Pages Deployment Workflows
 ```
 
 ---
@@ -198,6 +216,6 @@ The database consists of **10 normalized relational entities** configured with E
 
 <div align="center">
 
-Made with ❤️ using **React 19**, **Vite 8**, **ASP.NET Core 10**, **Tailwind CSS**, and **SQL Server**.
+Made with ❤️ by Keshav K.
 
 </div>
