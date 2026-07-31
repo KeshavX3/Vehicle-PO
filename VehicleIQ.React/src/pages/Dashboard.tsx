@@ -14,6 +14,7 @@ import TimelineFeed from '../components/cockpit/TimelineFeed';
 import type { TimelineItem } from '../components/cockpit/TimelineFeed';
 import CockpitButton from '../components/cockpit/CockpitButton';
 import InsightBanner from '../components/cockpit/InsightBanner';
+import { useTheme } from '../context/ThemeContext';
 
 import { vehiclesApi } from '../api/vehicles.api';
 import { expensesApi } from '../api/expenses.api';
@@ -26,6 +27,9 @@ import { calculateHealthScore } from '../utils/healthScore';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
   const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
   const [expenses, setExpenses] = useState<ExpenseDto[]>([]);
   const [reminders, setReminders] = useState<ReminderDto[]>([]);
@@ -59,7 +63,6 @@ export default function Dashboard() {
     .reduce((sum, e) => sum + e.amount, 0);
 
   const pendingReminders = reminders.filter(r => r.status === ReminderStatus.Pending);
-  // Urgent reminders threshold: Overdue or due within 7 days
   const urgentReminders = pendingReminders.filter(r => daysUntil(r.dueDate) <= 7);
 
   const totalSpend = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -183,7 +186,7 @@ export default function Dashboard() {
           subtitle="No vehicles registered yet in your telemetry garage."
         >
           <div className="py-6 text-center">
-            <p className="text-sm text-slate-300 mb-4">Add your first vehicle to start tracking fuel logs, expenses, and predictive maintenance dates.</p>
+            <p className="text-sm text-cockpit-muted mb-4">Add your first vehicle to start tracking fuel logs, expenses, and predictive maintenance dates.</p>
             <CockpitButton variant="primary" icon={<Plus className="w-4 h-4" />} onClick={() => navigate('/vehicles')}>
               Add Vehicle to Garage
             </CockpitButton>
@@ -203,18 +206,19 @@ export default function Dashboard() {
                   <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
+              <CartesianGrid strokeDasharray="3 3" stroke={isLight ? '#E2E8F0' : 'rgba(255,255,255,0.06)'} />
+              <XAxis dataKey="month" tick={{ fill: isLight ? '#64748B' : '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: isLight ? '#64748B' : '#94A3B8', fontSize: 12, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => `₹${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#161F33',
-                  border: '1px solid rgba(255,255,255,0.15)',
+                  backgroundColor: isLight ? '#FFFFFF' : '#161F33',
+                  border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 12,
-                  color: '#F8FAFC',
+                  color: isLight ? '#0F172A' : '#F8FAFC',
                   fontFamily: 'JetBrains Mono',
                   padding: '10px 14px',
+                  boxShadow: isLight ? '0 4px 20px rgba(0,0,0,0.08)' : '0 10px 30px rgba(0,0,0,0.5)',
                 }}
                 cursor={{ stroke: 'rgba(59, 130, 246, 0.4)', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                 formatter={(v: unknown) => [formatCurrency(v as number), 'Spend']}
@@ -231,18 +235,24 @@ export default function Dashboard() {
               <PieChart>
                 <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
                   {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} stroke="#161F33" strokeWidth={3} />
+                    <Cell key={i} fill={entry.color} stroke={isLight ? '#FFFFFF' : '#161F33'} strokeWidth={3} />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ background: '#161F33', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, color: '#F8FAFC', fontFamily: 'JetBrains Mono' }}
+                  contentStyle={{
+                    backgroundColor: isLight ? '#FFFFFF' : '#161F33',
+                    border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 12,
+                    color: isLight ? '#0F172A' : '#F8FAFC',
+                    fontFamily: 'JetBrains Mono',
+                  }}
                   formatter={(v: unknown) => [formatCurrency(v as number)]}
                 />
-                <Legend formatter={(v) => <span className="text-slate-300 text-xs font-mono">{v}</span>} />
+                <Legend formatter={(v) => <span className="text-cockpit-muted text-xs font-mono">{v}</span>} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="py-12 text-center text-slate-400 font-mono text-xs">
+            <div className="py-12 text-center text-cockpit-muted font-mono text-xs">
               No expense transactions logged.
             </div>
           )}
@@ -255,7 +265,7 @@ export default function Dashboard() {
           title="Telemetry Activity Feed"
           subtitle="Upcoming tasks & due notifications"
           action={
-            <Link to="/reminders" className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-mono font-semibold">
+            <Link to="/reminders" className="text-xs text-blue-500 hover:underline flex items-center gap-1 font-mono font-semibold">
               View All <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           }
@@ -268,7 +278,7 @@ export default function Dashboard() {
           title="Garage Vehicles Overview"
           subtitle="Registered telemetry units"
           action={
-            <Link to="/vehicles" className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-mono font-semibold">
+            <Link to="/vehicles" className="text-xs text-blue-500 hover:underline flex items-center gap-1 font-mono font-semibold">
               Garage Grid <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           }
@@ -278,22 +288,22 @@ export default function Dashboard() {
               <Link
                 key={v.id}
                 to={`/vehicles/${v.id}`}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-cockpit-surface-2/60 hover:bg-cockpit-surface-2 border border-white/10 hover:border-blue-500/40 transition-all group"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-cockpit-surface-2/80 hover:bg-cockpit-surface border border-cockpit-border hover:border-blue-500/40 transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 group-hover:scale-105 transition-transform">
                     <Car className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                    <h4 className="text-sm font-bold text-cockpit-text group-hover:text-blue-500 transition-colors">
                       {v.make} {v.model} ({v.year})
                     </h4>
-                    <p className="text-xs font-mono text-slate-400 mt-0.5">
+                    <p className="text-xs font-mono text-cockpit-muted mt-0.5">
                       {v.registrationNumber} • {v.currentOdometer.toLocaleString()} km
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-cockpit-muted group-hover:text-blue-500 transition-colors" />
               </Link>
             ))}
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Plus, Fuel, Receipt, Activity, Clock, ShieldCheck } from 'lucide-react';
+import { Bell, Plus, Fuel, Receipt, Activity, Clock, ShieldCheck, Sun, Moon } from 'lucide-react';
 import CockpitButton from '../cockpit/CockpitButton';
+import { useTheme } from '../../context/ThemeContext';
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/':           { title: 'Fleet Cockpit HUD',     subtitle: 'Real-time telemetry, health gauges & predictive analytics' },
@@ -20,6 +21,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 export default function TopBar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [timeStr, setTimeStr] = useState<string>('');
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function TopBar() {
   const page = pageTitles[basePath] ?? pageTitles['/'];
 
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between pl-14 pr-4 md:px-6 py-3.5 md:py-4 border-b border-white/10 bg-cockpit-bg/90 backdrop-blur-xl gap-3.5 relative z-10">
+    <header className="flex flex-col md:flex-row md:items-center justify-between pl-14 pr-4 md:px-6 py-3.5 md:py-4 border-b border-white/10 bg-cockpit-bg/90 backdrop-blur-xl gap-3.5 relative z-10 transition-colors duration-300">
       <div className="animate-fade-in">
         <div className="flex items-center gap-2.5">
           <h2 className="text-lg font-extrabold text-white tracking-tight">{page.title}</h2>
@@ -75,6 +77,20 @@ export default function TopBar() {
             Add Expense
           </CockpitButton>
         </div>
+
+        {/* Theme Switcher Button */}
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle Light or Dark Theme"
+          className="w-9.5 h-9.5 rounded-xl bg-cockpit-surface hover:bg-cockpit-surface-2 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md group"
+          title={theme === 'dark' ? 'Switch to Executive Light Mode' : 'Switch to Apex Tech Dark Mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+          ) : (
+            <Moon className="w-4 h-4 text-blue-600 group-hover:-rotate-12 transition-transform" />
+          )}
+        </button>
 
         {/* Notifications Icon */}
         <div className="relative">

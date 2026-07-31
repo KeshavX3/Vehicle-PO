@@ -9,15 +9,15 @@ export default {
       },
       colors: {
         cockpit: {
-          bg: '#0B0F19',
-          'bg-soft': '#111726',
-          surface: '#161F33',
-          'surface-2': '#1E2942',
-          'surface-3': '#263452',
-          border: 'rgba(255, 255, 255, 0.08)',
-          'border-hover': 'rgba(59, 130, 246, 0.35)',
-          text: '#F8FAFC',
-          muted: '#94A3B8',
+          bg: 'var(--bg-main)',
+          'bg-soft': 'var(--bg-soft)',
+          surface: 'var(--bg-surface)',
+          'surface-2': 'var(--bg-surface-2)',
+          'surface-3': 'var(--bg-surface-hover)',
+          border: 'var(--border-color)',
+          'border-hover': 'var(--border-color-hover)',
+          text: 'var(--text-main)',
+          muted: 'var(--text-muted)',
           azure: '#3B82F6',
           'azure-glow': 'rgba(59, 130, 246, 0.25)',
           amber: '#F59E0B',
@@ -30,7 +30,7 @@ export default {
       boxShadow: {
         'cockpit-glow': '0 0 25px -5px rgba(59, 130, 246, 0.15)',
         'cockpit-amber-glow': '0 0 25px -5px rgba(245, 158, 11, 0.2)',
-        'cockpit-card': '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06)',
+        'cockpit-card': 'var(--card-shadow)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
