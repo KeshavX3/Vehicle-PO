@@ -53,15 +53,24 @@ export default function VehicleDetail() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [v, f, s, ins, p] = await Promise.all([
-      vehiclesApi.getById(vehicleId),
-      fuelEntriesApi.getByVehicle(vehicleId),
-      serviceRecordsApi.getByVehicle(vehicleId),
-      insuranceApi.getByVehicle(vehicleId),
-      pucCertificatesApi.getByVehicle(vehicleId),
-    ]);
-    setVehicle(v); setFuelEntries(f); setServiceRecords(s); setInsurances(ins); setPucs(p);
-    setLoading(false);
+    try {
+      const [v, f, s, ins, p] = await Promise.all([
+        vehiclesApi.getById(vehicleId),
+        fuelEntriesApi.getByVehicle(vehicleId),
+        serviceRecordsApi.getByVehicle(vehicleId),
+        insuranceApi.getByVehicle(vehicleId),
+        pucCertificatesApi.getByVehicle(vehicleId),
+      ]);
+      setVehicle(v);
+      setFuelEntries(f);
+      setServiceRecords(s);
+      setInsurances(ins);
+      setPucs(p);
+    } catch (err) {
+      // Fallbacks are handled inside each API module
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadAll(); }, [vehicleId]);

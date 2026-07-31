@@ -1,5 +1,6 @@
 import type { VehicleDto, ExpenseDto, ReminderDto, FuelEntryDto, ServiceRecordDto, InsuranceDto, PucCertificateDto, DocumentDto } from '../types';
 import { VehicleType, FuelType, ServiceType, ExpenseCategory, InsuranceCoverageType, DocumentType, ReminderType, ReminderStatus } from '../types';
+import type { FleetSummaryAnalytics, VehicleAnalytics } from './analytics.api';
 
 export const mockVehicles: VehicleDto[] = [
   {
@@ -104,3 +105,58 @@ export const mockDocuments: DocumentDto[] = [
   { id: 701, userId: 1, vehicleId: 1, documentType: DocumentType.RC, fileName: 'RC_Book.pdf', originalFileName: 'RC_Book.pdf', filePath: '#', contentType: 'application/pdf', fileSizeBytes: 102400, createdAt: '2025-01-10' },
   { id: 702, userId: 1, vehicleId: 1, documentType: DocumentType.Insurance, fileName: 'Insurance_Policy.pdf', originalFileName: 'Insurance_Policy.pdf', filePath: '#', contentType: 'application/pdf', fileSizeBytes: 204800, createdAt: '2025-07-30' },
 ];
+
+export const mockFleetSummary: FleetSummaryAnalytics = {
+  totalVehicles: 3,
+  totalFleetSpend: 18600,
+  averageFleetCostPerKm: 2.85,
+  averageFleetMileageKmL: 15.4,
+  activeAnomaliesCount: 0,
+  upcomingServicesCount: 1,
+  forecastNext30DaysSpend: 4200,
+  forecastNext90DaysSpend: 12500,
+  keyRecommendations: [
+    'Maruti Suzuki Baleno PUC Certificate expires in 182 days.',
+    'Honda Activa 1G is approaching 70,000 km general service checkup.',
+  ],
+  vehicleSummaries: [
+    {
+      vehicleId: 1,
+      vehicleName: 'Maruti Suzuki Baleno',
+      baselineMileageKmL: 15.2,
+      latestMileageKmL: 14.8,
+      costPerKm: 3.12,
+      totalDistanceTraveledKm: 32542,
+      totalSpentAmount: 16700,
+      fuelAnomalies: [],
+      servicePrediction: {
+        vehicleId: 1,
+        vehicleName: 'Maruti Suzuki Baleno',
+        currentOdometer: 32542,
+        targetServiceOdometer: 40000,
+        averageDailyKm: 25,
+        daysUntilService: 298,
+        urgencyLevel: 'Normal',
+      },
+    },
+    {
+      vehicleId: 2,
+      vehicleName: 'Honda Activa 1G',
+      baselineMileageKmL: 42.0,
+      latestMileageKmL: 42.0,
+      costPerKm: 1.85,
+      totalDistanceTraveledKm: 68784,
+      totalSpentAmount: 2650,
+      fuelAnomalies: [],
+      servicePrediction: {
+        vehicleId: 2,
+        vehicleName: 'Honda Activa 1G',
+        currentOdometer: 68784,
+        targetServiceOdometer: 70000,
+        averageDailyKm: 15,
+        daysUntilService: 81,
+        urgencyLevel: 'Upcoming',
+      },
+    },
+  ],
+};

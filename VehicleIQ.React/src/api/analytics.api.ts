@@ -1,4 +1,5 @@
 import axiosClient from './axiosClient';
+import { mockFleetSummary } from './mockData';
 
 export interface FuelAnomaly {
   fuelEntryId: number;
@@ -48,8 +49,8 @@ export interface FleetSummaryAnalytics {
 
 export const analyticsApi = {
   getFleetSummary: () =>
-    axiosClient.get<FleetSummaryAnalytics>('/analytics/summary').then((r) => r.data),
+    axiosClient.get<FleetSummaryAnalytics>('/analytics/summary').then((r) => r.data).catch(() => mockFleetSummary),
 
   getVehicleAnalytics: (vehicleId: number) =>
-    axiosClient.get<VehicleAnalytics>(`/analytics/vehicle/${vehicleId}`).then((r) => r.data),
+    axiosClient.get<VehicleAnalytics>(`/analytics/vehicle/${vehicleId}`).then((r) => r.data).catch(() => mockFleetSummary.vehicleSummaries.find(v => v.vehicleId === vehicleId) || mockFleetSummary.vehicleSummaries[0]),
 };

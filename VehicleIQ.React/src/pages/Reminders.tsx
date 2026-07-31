@@ -71,9 +71,9 @@ export default function Reminders() {
 
   const handleMarkDone = async (id: number) => {
     try {
+      setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, status: ReminderStatus.Completed } : r)));
       await remindersApi.updateStatus(id, { status: ReminderStatus.Completed });
-      toast.success('Reminder task completed!');
-      loadData();
+      toast.success('Reminder task marked as completed!');
     } catch (err: any) {
       toast.error('Failed to mark as completed');
     }
@@ -83,13 +83,13 @@ export default function Reminders() {
     try {
       const snoozeDate = new Date();
       snoozeDate.setDate(snoozeDate.getDate() + days);
+      setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, status: ReminderStatus.Snoozed, snoozedUntil: snoozeDate.toISOString() } : r)));
+      setSnoozeMenuOpen(null);
       await remindersApi.updateStatus(id, {
         status: ReminderStatus.Snoozed,
         snoozedUntil: snoozeDate.toISOString(),
       });
       toast.success(`Snoozed for ${days} days`);
-      setSnoozeMenuOpen(null);
-      loadData();
     } catch (err: any) {
       toast.error('Failed to snooze reminder');
     }
@@ -97,9 +97,9 @@ export default function Reminders() {
 
   const handleDismiss = async (id: number) => {
     try {
+      setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, status: ReminderStatus.Dismissed } : r)));
       await remindersApi.updateStatus(id, { status: ReminderStatus.Dismissed });
       toast('Reminder dismissed');
-      loadData();
     } catch (err: any) {
       toast.error('Failed to dismiss reminder');
     }
@@ -107,9 +107,9 @@ export default function Reminders() {
 
   const handleReopen = async (id: number) => {
     try {
+      setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, status: ReminderStatus.Pending } : r)));
       await remindersApi.updateStatus(id, { status: ReminderStatus.Pending });
       toast.success('Reminder restored to pending');
-      loadData();
     } catch (err: any) {
       toast.error('Failed to reopen reminder');
     }
@@ -119,10 +119,10 @@ export default function Reminders() {
     if (!deleteId) return;
     try {
       setDeleting(true);
+      setReminders((prev) => prev.filter((r) => r.id !== deleteId));
       await remindersApi.delete(deleteId);
       toast.success('Reminder deleted successfully');
       setDeleteId(null);
-      loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to delete reminder');
     } finally {
